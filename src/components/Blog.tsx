@@ -3,59 +3,43 @@ import { ArrowRight, Clock } from "lucide-react";
 
 const posts = [
   {
-    title: "Growing a SaaS Without Breaking Systems",
-    excerpt:
-      "How sustainable growth comes from strong foundations, clear processes, and...",
-    category: "Growth",
-    image: "bg-amber-100",
+    title: 'Why goals fail before they start',
+    excerpt: 'It usually isn\u2019t ambition or discipline. It\u2019s that nobody tells you what to do on a random Tuesday...',
+    category: 'Finishing',
+    readTime: '4 min read',
   },
   {
-    title: "Designing SaaS Workflows That Scale",
-    excerpt:
-      "A practical guide to building clear, reliable workflows that support growth without...",
-    category: "Workflows",
-    readTime: "5 min read",
-    image: "bg-blue-100",
+    title: 'The case for one task a day',
+    excerpt: 'A long backlog feels productive and produces nothing. Here\u2019s what happens when you cut it to one...',
+    category: 'Focus',
+    readTime: '5 min read',
   },
   {
-    title: "The Real Cost of Manual SaaS Work",
-    excerpt:
-      "A practical look at simplifying workflows, reducing manual work, and scaling...",
-    category: "Automation",
-    image: "bg-purple-100",
+    title: 'Build in public without the dread',
+    excerpt: 'Most people quit posting updates because writing them feels like a second job. It doesn\u2019t have to...',
+    category: 'Proof',
+    readTime: '3 min read',
   },
   {
-    title: "Streamlining SaaS Without Adding Overhead",
-    excerpt:
-      "A clear look at how efficient operations help SaaS teams reduce friction, stay aligned, and scale without unnecessary...",
-    category: "Operations",
-    readTime: "5 min read",
+    title: 'What a roadmap should actually do',
+    excerpt: 'Most roadmaps are static documents nobody revisits. A good one should update itself and tell you what today looks like, not just where the finish line is.',
+    category: 'Roadmaps',
+    readTime: '6 min read',
     featured: true,
   },
 ];
 
 export default function Blog() {
   return (
-    <section
-      id="blog"
-      className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto"
-    >
-      <div className="text-center mb-12">
-        <span className="inline-block px-4 py-1.5 bg-purple-50 text-purple-600 rounded-full text-sm font-medium mb-4">
-          Blogs
-        </span>
-        <h2 className="text-3xl sm:text-4xl font-bold text-[var(--text)] mb-4">
-          Helpful Insights
-          <br />
-          To Help You Grow
+    <section id="blog" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="text-center mb-14">
+        <div className="eyebrow justify-center mb-4">Notes</div>
+        <h2 className="font-display font-semibold mb-4" style={{ fontSize: 'clamp(1.9rem, 3.4vw, 2.75rem)', color: 'var(--text)' }}>
+          Writing on finishing what you start
         </h2>
-        <p className="text-[var(--text-muted)] mb-8">
-          Explore our latest articles to help your SaaS product succeed and
-          scale smarter.
-        </p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mb-5">
         {posts.slice(0, 3).map((post, idx) => (
           <motion.article
             key={post.title}
@@ -63,60 +47,37 @@ export default function Blog() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: idx * 0.1 }}
-            className="bg-[var(--card)] rounded-3xl overflow-hidden border border-[var(--border)] hover:shadow-lg transition-shadow cursor-pointer"
+            className="card p-6 cursor-pointer"
           >
-            <div className={`h-48 ${post.image}`} />
-            <div className="p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="px-3 py-1 bg-purple-100 text-purple-600 rounded-full text-xs font-medium">
-                  {post.category}
-                </span>
-                {post.readTime && (
-                  <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
-                    <Clock className="w-3 h-3" />
-                    {post.readTime}
-                  </span>
-                )}
-              </div>
-              <h3 className="font-bold text-[var(--text)] mb-2 line-clamp-2">
-                {post.title}
-              </h3>
-              <p className="text-sm text-[var(--text-muted)] line-clamp-2">
-                {post.excerpt}
-              </p>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="pill px-2.5 py-1 text-[10.5px] font-mono" style={{ color: 'var(--violet)' }}>{post.category}</span>
+              <span className="flex items-center gap-1 text-[11px] text-faint">
+                <Clock className="w-3 h-3" />{post.readTime}
+              </span>
             </div>
+            <h3 className="font-display font-semibold text-[16px] mb-2 leading-snug" style={{ color: 'var(--text)' }}>{post.title}</h3>
+            <p className="text-[13px] leading-relaxed text-muted">{post.excerpt}</p>
           </motion.article>
         ))}
       </div>
 
-      {/* Featured Post */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="bg-[var(--card)] rounded-3xl overflow-hidden border border-[var(--border)]"
+        className="glass-strong rounded-3xl p-8 md:p-10"
       >
-        <div className="grid md:grid-cols-2">
-          <div className="h-64 md:h-auto bg-emerald-100" />
-          <div className="p-8 flex flex-col justify-center">
-            <span className="inline-block px-3 py-1 bg-purple-100 text-purple-600 rounded-full text-xs font-medium w-fit mb-4">
-              {posts[3].category}
-            </span>
-            <h3 className="text-2xl font-bold text-[var(--text)] mb-3">
-              {posts[3].title}
-            </h3>
-            <p className="text-[var(--text-muted)] mb-4">{posts[3].excerpt}</p>
-            <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] mb-6">
-              <Clock className="w-4 h-4" />
-              {posts[3].readTime}
-            </div>
-          </div>
+        <span className="pill inline-block px-2.5 py-1 text-[10.5px] font-mono mb-4" style={{ color: 'var(--gold)' }}>{posts[3].category}</span>
+        <h3 className="font-display text-2xl font-semibold mb-3 max-w-xl" style={{ color: 'var(--text)' }}>{posts[3].title}</h3>
+        <p className="text-muted mb-5 max-w-xl leading-relaxed">{posts[3].excerpt}</p>
+        <div className="flex items-center gap-2 text-[12px] text-faint">
+          <Clock className="w-3.5 h-3.5" />{posts[3].readTime}
         </div>
       </motion.div>
 
-      <div className="text-center mt-8">
-        <button className="inline-flex items-center gap-2 text-[var(--text)] font-medium hover:text-purple-600 transition-colors">
-          View all <ArrowRight className="w-4 h-4" />
+      <div className="text-center mt-10">
+        <button className="inline-flex items-center gap-2 font-medium text-sm" style={{ color: 'var(--text)' }}>
+          Read more <ArrowRight className="w-4 h-4" />
         </button>
       </div>
     </section>
