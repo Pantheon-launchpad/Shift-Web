@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { CreditCard } from "lucide-react";
 
-export default function Hero() {
+export default function Hero({ onGetStarted }: { onGetStarted?: () => void }) {
   return (
     <section className="pt-32 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-[var(--bg)]">
       <div className="text-center relative">
@@ -130,7 +130,7 @@ export default function Hero() {
           transition={{ delay: 0.3 }}
           className="flex flex-col items-center gap-3"
         >
-          <button className="bg-purple-900 text-white px-8 py-3 rounded-full font-medium hover:bg-purple-700 transition-colors">
+          <button onClick={onGetStarted} className="bg-purple-900 text-white px-8 py-3 rounded-full font-medium hover:bg-purple-700 transition-colors">
             Get Started For Free
           </button>
           <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm">
