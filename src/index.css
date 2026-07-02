@@ -1,30 +1,280 @@
 @import "tailwindcss";
 
-@theme {
-  --color-primary: #2563eb;
-  --color-primary-light: #3b82f6;
+/* ============================================================
+   SHIFT — Design tokens
+   Dark charcoal by default, warm off-white text, one cool
+   accent (violet) for action, one warm accent (gold) reserved
+   only for "proof" moments — the point where messy work turns
+   into something worth showing.
+   ============================================================ */
+
+:root {
+  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --ink: #0a0b0d;
+  --ink-1: #101216;
+  --ink-2: #16181d;
+  --ink-3: #1d2027;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.16);
+
+  --text: #f3f2ee;
+  --text-muted: #9b9ca3;
+  --text-faint: #66676e;
+
+  --violet: #8335FD;
+  --violet-dim: #6629c5;
+  --gold: #f2b84b;
+  --gold-dim: #d99c2f;
+
+  --glass: rgba(255, 255, 255, 0.045);
+  --glass-strong: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.1);
+
+  --shadow-soft: 0 1px 1px rgba(0,0,0,0.2), 0 8px 24px -8px rgba(0,0,0,0.5);
+  --shadow-lift: 0 1px 1px rgba(0,0,0,0.25), 0 24px 48px -16px rgba(0,0,0,0.65);
+
+  color-scheme: dark;
 }
 
-@layer base {
-  :root {
-    --bg: #f8fafc;
-    --card: #ffffff;
-    --surface: #f1f5f9;
-    --text: #1e293b;
-    --text-muted: #64748b;
-    --border: #e2e8f0;
-  }
-  
-  .dark {
-    --bg: #0a0a0a;
-    --card: #141414;
-    --surface: #1a1a1a;
-    --text: #fafafa;
-    --text-muted: #a1a1aa;
-    --border: #27272a;
-  }
-  
-  body {
-    @apply bg-[var(--bg)] text-[var(--text)] transition-colors duration-300;
+html.light {
+  --ink: #f6f5f1;
+  --ink-1: #ffffff;
+  --ink-2: #ffffff;
+  --ink-3: #fbfaf7;
+  --line: rgba(15, 15, 20, 0.09);
+  --line-strong: rgba(15, 15, 20, 0.16);
+
+  --text: #17181c;
+  --text-muted: #5b5c63;
+  --text-faint: #92939a;
+
+  --glass: rgba(255, 255, 255, 0.55);
+  --glass-strong: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(15, 15, 20, 0.08);
+
+  --shadow-soft: 0 1px 1px rgba(15,15,20,0.03), 0 8px 24px -10px rgba(15,15,20,0.18);
+  --shadow-lift: 0 1px 1px rgba(15,15,20,0.04), 0 24px 48px -16px rgba(15,15,20,0.22);
+
+  color-scheme: light;
+}
+
+@theme {
+  --color-ink: var(--ink);
+  --color-violet: #8335FD;
+  --color-gold: #f2b84b;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.4s ease, color 0.4s ease;
+  overflow-x: hidden;
+}
+
+::selection { background: var(--violet); color: white; }
+
+/* Focus visibility kept intentionally, restyled to match theme */
+:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.font-display { font-family: var(--font-display); }
+.font-mono { font-family: var(--font-mono); }
+
+/* ---------------- Background system ---------------- */
+
+.shift-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+.shift-canvas::before {
+  /* grid */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 70%);
+  opacity: 0.5;
+}
+
+html.light .shift-canvas::before { opacity: 0.35; }
+
+.shift-canvas::after {
+  /* grain */
+  content: '';
+  position: absolute;
+  inset: -200px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.35;
+}
+html.light .orb { opacity: 0.28; }
+
+/* ---------------- Glass surfaces ---------------- */
+
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05),
+    inset -1px 0 0 rgba(0, 0, 0, 0.08),
+    0 1px 1px rgba(0, 0, 0, 0.15);
+}
+
+.glass-strong {
+  background: var(--glass-strong);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1.5px 0 rgba(0, 0, 0, 0.22),
+    inset 1.5px 0 0 rgba(255, 255, 255, 0.06),
+    inset -1.5px 0 0 rgba(0, 0, 0, 0.1),
+    0 1px 1px rgba(0, 0, 0, 0.15);
+}
+
+html.light .glass,
+html.light .glass-strong {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(15, 15, 20, 0.05),
+    0 1px 1px rgba(15, 15, 20, 0.03);
+}
+
+.perspective { perspective: 1200px; }
+
+.card {
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    var(--shadow-soft);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  border-color: var(--line-strong);
+}
+
+/* ---------------- Buttons ---------------- */
+
+.btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: 999px;
+  padding: 0.7rem 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, #9653fd, var(--violet));
+  color: white;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset, 0 8px 20px -6px rgba(131, 53, 253, 0.55);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset, 0 12px 28px -6px rgba(131, 53, 253, 0.7);
+}
+.btn-primary:active { transform: translateY(0px) scale(0.98); }
+
+.btn-ghost {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  backdrop-filter: blur(12px);
+}
+.btn-ghost:hover {
+  background: var(--glass-strong);
+  transform: translateY(-1px);
+}
+
+/* ---------------- Small system bits ---------------- */
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--violet);
+  box-shadow: 0 0 10px var(--violet);
+}
+
+.pill {
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+}
+
+.text-muted { color: var(--text-muted); }
+.text-faint { color: var(--text-faint); }
+.border-line { border-color: var(--line); }
+
+.gold-text { color: var(--gold); }
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
