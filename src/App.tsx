@@ -15,26 +15,98 @@ import Blog from "./components/Blog";
 import Newsletter from "./components/Newsletter";
 import Footer from "./components/Footer";
 import ShiftAuth from "./pages/auth";
+import GoalIntake from "./components/GoalIntake";
 import ShiftDash from "./pages/dash";
+import DebriefScreen from "./components/DebriefScreen";
+import ResultScreen from "./components/ResultScreen";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();
+
 function App() {
-  const [view, setView] = useState<"landing" | "auth" | "dash">("landing");
+  const [view, setView] = useState<
+    "landing" | "auth" | "goal" | "dash" | "debrief" | "result"
+  >("landing");
 
+  // Store data across screens
+  const [goalData, setGoalData] = useState<{
+    goal: string;
+    roadmap: any;
+  } | null>(null);
+  const [debriefData, setDebriefData] = useState<any>(null);
+  const [taskTitle, setTaskTitle] = useState("");
+
+  // Handlers
   const handleGetStarted = () => setView("auth");
-  const handleAuthSuccess = () => setView("dash");
+  const handleAuthSuccess = () => setView("goal");
 
+  const handleGoalComplete = (goal: string, roadmap: any) => {
+    setGoalData({ goal, roadmap });
+    setTaskTitle(roadmap.todayTask?.title || "Build the landing page");
+    setView("dash");
+  };
+
+  // 👇 NEW: Called from dashboard when focus session ends
+  const handleFocusEnd = () => {
+    setView("debrief");
+  };
+
+  // 👇 NEW: Called from debrief when submitted
+  const handleDebriefComplete = (debrief: {
+    rawText: string;
+    link?: string;
+    aiSummary: string;
+  }) => {
+    setDebriefData(debrief);
+    setView("result");
+  };
+
+  // 👇 NEW: Called from result when "Done for today" is clicked
+  const handleDoneToday = () => {
+    setView("dash");
+  };
+
+  // Auth screen
   if (view === "auth") {
     return <ShiftAuth onAuthSuccess={handleAuthSuccess} />;
   }
 
-  if (view === "dash") {
-    return <ShiftDash />; // Your existing dashboard (no props needed)
+  // Goal Intake
+  if (view === "goal") {
+    return <GoalIntake onComplete={handleGoalComplete} />;
   }
 
-  // Landing page
-  return (
+  // Debrief
+  if (view === "debrief") {
+    return (
+      <DebriefScreen taskTitle={taskTitle} onComplete={handleDebriefComplete} />
+    );
+  }
+
+  // Result
+  if (view === "result") {
+    return (
+      <ResultScreen
+        goal={goalData?.goal || "Launch your startup"}
+        milestone={
+          goalData?.roadmap?.milestones?.find(
+            (m: any) => m.status === "current"
+          )?.title || "Current milestone"
+        }
+        streak={6}
+        debriefSummary={debriefData?.aiSummary || ""}
+        onDone={handleDoneToday}
+      />
+    );
+  }
+
+  // Dashboard
+  if (view === "dash") {
+    return <ShiftDash goalData={goalData} onFocusEnd={handleFocusEnd} />;
+  }
+
+   // Landing page
+   return (
     <QueryClientProvider client={queryClient}>
       <div className="relative min-h-screen">
         {/* Fixed ambient background, shared across the whole page */}
