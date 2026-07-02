@@ -1,3 +1,4 @@
+// Analytics.tsx
 import { useAnalytics } from '../hooks/useAnalytics';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
@@ -7,16 +8,16 @@ export const Analytics = () => {
 
   if (isLoading) {
     return (
-      <section id="analytics" className="py-24 bg-gray-900">
+      <section id="analytics" className="py-24 bg-[var(--bg)]">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="animate-pulse text-white">Loading analytics...</div>
+          <div className="animate-pulse text-[var(--text)]">Loading analytics...</div>
         </div>
       </section>
     );
   }
 
   return (
-    <section id="analytics" className="py-24 bg-gray-900">
+    <section id="analytics" className="py-24 bg-[var(--bg)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
@@ -24,26 +25,26 @@ export const Analytics = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-[var(--text)] mb-6">
               Powerful analytics at your fingertips
             </h2>
-            <p className="text-gray-400 mb-8">
+            <p className="text-[var(--text-muted)] mb-8">
               Track your key metrics in real-time. Our dashboard gives you a complete 
               overview of your business performance with actionable insights.
             </p>
             
             <div className="grid grid-cols-3 gap-6">
               <div>
-                <div className="text-3xl font-bold text-white">{data?.users.toLocaleString()}</div>
-                <div className="text-sm text-gray-400">Active Users</div>
+                <div className="text-3xl font-bold text-[var(--text)]">{data?.users.toLocaleString()}</div>
+                <div className="text-sm text-[var(--text-muted)]">Active Users</div>
               </div>
               <div>
                 <div className="text-3xl font-bold text-purple-400">${data?.revenue.toLocaleString()}</div>
-                <div className="text-sm text-gray-400">Revenue</div>
+                <div className="text-sm text-[var(--text-muted)]">Revenue</div>
               </div>
               <div>
                 <div className="text-3xl font-bold text-green-400">+{data?.growth}%</div>
-                <div className="text-sm text-gray-400">Growth</div>
+                <div className="text-sm text-[var(--text-muted)]">Growth</div>
               </div>
             </div>
           </motion.div>
@@ -52,16 +53,16 @@ export const Analytics = () => {
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="bg-black p-6 rounded-2xl border border-white/10"
+            className="bg-[var(--surface)] p-6 rounded-2xl border border-[var(--border)]"
           >
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={data?.chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="name" stroke="#666" />
-                <YAxis stroke="#666" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="name" stroke="var(--text-muted)" />
+                <YAxis stroke="var(--text-muted)" />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
-                  labelStyle={{ color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+                  labelStyle={{ color: 'var(--text)' }}
                 />
                 <Line 
                   type="monotone" 

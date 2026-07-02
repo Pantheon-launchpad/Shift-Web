@@ -8,7 +8,7 @@ const fadeUp = {
   animate: { opacity: 1, y: 0 },
 };
 
-export default function Hero() {
+export default function Hero({ onGetStarted }: { onGetStarted?: () => void }) {
   return (
     <section className="relative pt-40 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-16 items-center">

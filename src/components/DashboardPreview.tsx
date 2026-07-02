@@ -1,32 +1,71 @@
-'use client';
+// dashboard.tsx
+"use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState } from "react";
+import { motion } from "framer-motion";
 import {
-  Target, Calendar, Timer, MessageSquare, Share2, Settings,
-  ChevronRight, Flame, Play, CheckCircle2, Circle, Sparkles,
-} from 'lucide-react';
-import TiltCard from './TiltCard';
-import { AreaChart, Area, ResponsiveContainer } from 'recharts';
-import logo from '../assets/logo.svg';
+  Search,
+  LayoutDashboard,
+  Users,
+  FileText,
+  Globe,
+  MessageCircle,
+  Handshake,
+  Download,
+  Settings,
+  LogOut,
+  ChevronDown,
+  Star,
+  Edit,
+  MoreHorizontal,
+  TrendingUp,
+} from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
-const roadmapProgress = [
-  { v: 8 }, { v: 14 }, { v: 12 }, { v: 22 }, { v: 30 }, { v: 28 }, { v: 41 }, { v: 55 }, { v: 62 },
+const growthData = [
+  { year: "2016", value: 10 },
+  { year: "2017", value: 25 },
+  { year: "2018", value: 45 },
+  { year: "2019", value: 30 },
+  { year: "2020", value: 35 },
+  { year: "2021", value: 55 },
+  { year: "2022", value: 75 },
+  { year: "2023", value: 95 },
+];
+
+const customers = [
+  {
+    name: "Chris Friedly",
+    company: "Supermarket Villanova",
+    avatar: "bg-amber-700",
+  },
+  {
+    name: "Maggie Johnson",
+    company: "Oasis Organic Inc.",
+    avatar: "bg-emerald-600",
+    active: true,
+  },
+  {
+    name: "Gael Harry",
+    company: "New York Finest Fruits",
+    avatar: "bg-amber-800",
+  },
+  {
+    name: "Jenna Sullivan",
+    company: "Walmart",
+    avatar: "bg-slate-500",
+  },
 ];
 
 const sidebarItems = [
-  { icon: Target, label: 'Roadmap' },
-  { icon: Calendar, label: "Today", active: true },
-  { icon: Timer, label: 'Focus' },
-  { icon: MessageSquare, label: 'Debrief' },
-  { icon: Share2, label: 'Proof' },
-];
-
-const milestones = [
-  { label: 'Validate idea', done: true },
-  { label: 'Ship MVP', done: true },
-  { label: 'First 10 users', done: false, current: true },
-  { label: 'First $1k MRR', done: false },
+  { icon: Search, label: "Search" },
+  { icon: LayoutDashboard, label: "Dashboard", active: true },
+  { icon: Users, label: "Customers", hasSubmenu: true },
+  { icon: FileText, label: "All reports" },
+  { icon: Globe, label: "Geography" },
+  { icon: MessageCircle, label: "Conversations" },
+  { icon: Handshake, label: "Deals" },
+  { icon: Download, label: "Export" },
 ];
 
 export default function DashboardPreview() {
