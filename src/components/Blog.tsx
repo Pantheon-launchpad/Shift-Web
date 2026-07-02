@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { ArrowRight, Clock } from 'lucide-react';
+import { motion } from "framer-motion";
+import { ArrowRight, Clock } from "lucide-react";
 
 const posts = [
   {

@@ -8,7 +8,7 @@ const fadeUp = {
   animate: { opacity: 1, y: 0 },
 };
 
-export default function Hero() {
+export default function Hero({ onGetStarted }: { onGetStarted?: () => void }) {
   return (
     <section className="relative pt-40 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-16 items-center">
@@ -43,7 +43,7 @@ export default function Hero() {
           </motion.p>
 
           <motion.div {...fadeUp} transition={{ duration: 0.6, delay: 0.25 }} className="flex flex-wrap items-center gap-4">
-            <button className="btn btn-primary text-[15px] py-3.5 px-6">
+            <button onClick={onGetStarted} className="btn btn-primary text-[15px] py-3.5 px-6">
               Start your roadmap <ArrowRight className="w-4 h-4" />
             </button>
             <button className="btn btn-ghost text-[15px] py-3.5 px-6">
