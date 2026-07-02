@@ -25,6 +25,33 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    const sections = navLinks
+      .map((link) => document.querySelector<HTMLElement>(link.href))
+      .filter((el): el is HTMLElement => el !== null);
+
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActive(`#${entry.target.id}`);
+          }
+        });
+      },
+      {
+        // Thin band near the vertical center of the viewport, offset for the
+        // fixed navbar — whichever section crosses it becomes "active".
+        rootMargin: '-45% 0px -50% 0px',
+        threshold: 0,
+      }
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <motion.nav
       initial={{ y: -40, opacity: 0 }}

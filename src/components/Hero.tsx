@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, CheckCircle2, Circle, Flame, Heart, MessageCircle, Repeat2 } from 'lucide-react';
+import { FaAndroid } from 'react-icons/fa6';
 import TiltCard from './TiltCard';
 
 const fadeUp = {
@@ -48,6 +49,10 @@ export default function Hero() {
             <button className="btn btn-ghost text-[15px] py-3.5 px-6">
               See how it works
             </button>
+            <a href="" className="btn btn-ghost text-[15px] py-3.5 px-6">
+              <FaAndroid className="w-4 h-4" />
+              Download for Android
+            </a>
           </motion.div>
 
           <motion.div {...fadeUp} transition={{ duration: 0.6, delay: 0.35 }} className="flex items-center gap-6 mt-10 pt-8" style={{ borderTop: '1px solid var(--line)' }}>
