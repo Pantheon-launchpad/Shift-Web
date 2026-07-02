@@ -1,300 +1,168 @@
-// dashboard.tsx
 'use client';
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Search, LayoutDashboard, Users, FileText, Globe, 
-  MessageCircle, Handshake, Download, Settings, LogOut,
-  ChevronDown, Star, Edit, MoreHorizontal, TrendingUp
+import {
+  Target, Calendar, Timer, MessageSquare, Share2, Settings,
+  ChevronRight, Flame, Play, CheckCircle2, Circle, Sparkles,
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import TiltCard from './TiltCard';
+import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import logo from '../assets/logo.svg';
 
-const growthData = [
-  { year: '2016', value: 10 },
-  { year: '2017', value: 25 },
-  { year: '2018', value: 45 },
-  { year: '2019', value: 30 },
-  { year: '2020', value: 35 },
-  { year: '2021', value: 55 },
-  { year: '2022', value: 75 },
-  { year: '2023', value: 95 },
-];
-
-const customers = [
-  { name: 'Chris Friedly', company: 'Supermarket Villanova', avatar: 'bg-amber-700' },
-  { name: 'Maggie Johnson', company: 'Oasis Organic Inc.', avatar: 'bg-emerald-600', active: true },
-  { name: 'Gael Harry', company: 'New York Finest Fruits', avatar: 'bg-amber-800' },
-  { name: 'Jenna Sullivan', company: 'Walmart', avatar: 'bg-gray-500' },
+const roadmapProgress = [
+  { v: 8 }, { v: 14 }, { v: 12 }, { v: 22 }, { v: 30 }, { v: 28 }, { v: 41 }, { v: 55 }, { v: 62 },
 ];
 
 const sidebarItems = [
-  { icon: Search, label: 'Search' },
-  { icon: LayoutDashboard, label: 'Dashboard', active: true },
-  { icon: Users, label: 'Customers', hasSubmenu: true },
-  { icon: FileText, label: 'All reports' },
-  { icon: Globe, label: 'Geography' },
-  { icon: MessageCircle, label: 'Conversations' },
-  { icon: Handshake, label: 'Deals' },
-  { icon: Download, label: 'Export' },
+  { icon: Target, label: 'Roadmap' },
+  { icon: Calendar, label: "Today", active: true },
+  { icon: Timer, label: 'Focus' },
+  { icon: MessageSquare, label: 'Debrief' },
+  { icon: Share2, label: 'Proof' },
+];
+
+const milestones = [
+  { label: 'Validate idea', done: true },
+  { label: 'Ship MVP', done: true },
+  { label: 'First 10 users', done: false, current: true },
+  { label: 'First $1k MRR', done: false },
 ];
 
 export default function DashboardPreview() {
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - rect.left - rect.width / 2) / 25;
-    const y = (e.clientY - rect.top - rect.height / 2) / 25;
-    setMousePosition({ x, y });
-  };
-
-  const handleMouseLeave = () => {
-    setMousePosition({ x: 0, y: 0 });
+    setMouse({
+      x: (e.clientX - rect.left - rect.width / 2) / 40,
+      y: (e.clientY - rect.top - rect.height / 2) / 40,
+    });
   };
 
   return (
-    <section className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto mb-20">
+    <section id="product" className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto mb-28">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-200"
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.7 }}
+        className="glass-strong rounded-[28px] overflow-hidden"
         style={{
-          transform: `perspective(1000px) rotateX(${-mousePosition.y}deg) rotateY(${mousePosition.x}deg)`,
-          transition: 'transform 0.1s ease-out'
+          boxShadow: 'var(--shadow-lift)',
+          transform: `perspective(1400px) rotateX(${-mouse.y}deg) rotateY(${mouse.x}deg)`,
+          transition: 'transform 0.15s ease-out',
         }}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
+        onMouseMove={handleMove}
+        onMouseLeave={() => setMouse({ x: 0, y: 0 })}
       >
+        {/* Window chrome */}
+        <div className="flex items-center gap-2 px-5 py-3.5" style={{ borderBottom: '1px solid var(--line)' }}>
+          <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#ff5f57' }} />
+          <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#febc2e' }} />
+          <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#28c840' }} />
+          <span className="mx-auto text-[11px] font-mono text-faint">shift.app / today</span>
+        </div>
+
         <div className="flex">
           {/* Sidebar */}
-          <div className="w-64 bg-gray-50 border-r border-gray-200 p-4 hidden sm:block">
-            <div className="flex items-center gap-2 mb-8">
-              <div className="w-8 h-8 bg-purple-900 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">+</span>
-              </div>
-              <span className="font-bold text-gray-900">Shift</span>
+          <div className="w-56 p-4 hidden sm:block" style={{ borderRight: '1px solid var(--line)' }}>
+            <div className="flex items-center gap-2 mb-8 px-1">
+              <img src={logo} alt="Shift logo" className="w-6 h-6 rounded-md" />
+              <span className="font-display font-semibold text-sm" style={{ color: 'var(--text)' }}>Shift</span>
             </div>
-
             <nav className="space-y-1">
               {sidebarItems.map((item) => (
                 <button
                   key={item.label}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-                    item.active ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-600 hover:bg-white'
-                  }`}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] transition-colors"
+                  style={item.active
+                    ? { background: 'var(--glass-strong)', color: 'var(--text)', border: '1px solid var(--glass-border)' }
+                    : { color: 'var(--text-muted)' }}
                 >
                   <item.icon className="w-4 h-4" />
                   <span>{item.label}</span>
-                  {item.hasSubmenu && <ChevronDown className="w-4 h-4 ml-auto" />}
+                  {item.active && <ChevronRight className="w-3.5 h-3.5 ml-auto" />}
                 </button>
               ))}
             </nav>
 
-            <div className="mt-8 pt-8 border-t border-gray-200">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-indigo-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Gustavo Xavier</p>
-                  <p className="text-xs text-gray-500">Admin</p>
-                </div>
+            <div className="mt-8 pt-6" style={{ borderTop: '1px solid var(--line)' }}>
+              <div className="flex items-center gap-2 mb-1">
+                <Flame className="w-3.5 h-3.5" style={{ color: 'var(--gold)' }} />
+                <span className="text-[12px] font-mono" style={{ color: 'var(--text)' }}>41-day streak</span>
               </div>
-              <button className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 w-full">
-                <Settings className="w-4 h-4" />
-                Settings
-              </button>
-              <button className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 w-full">
-                <LogOut className="w-4 h-4" />
-                Log out
-              </button>
+              <p className="text-[11px] text-faint">Longest run yet</p>
             </div>
           </div>
 
-          {/* Main Content */}
+          {/* Main */}
           <div className="flex-1 p-6">
-            {/* Top Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              {[
-                { title: 'Revenues', value: '15%', subtext: 'Increase compared to last week', link: 'Revenues report', color: 'purple' },
-                { title: 'Lost deals', value: '4%', subtext: 'You closed 96 out of 100 deals', link: 'All deals', color: 'gray' },
-                { title: 'Quarter goal', value: '84%', subtext: '', link: 'All goals', color: 'purple', isChart: true },
-              ].map((stat, idx) => (
-                <motion.div
-                  key={stat.title}
-                  className="bg-white border border-gray-200 rounded-2xl p-4 hover:shadow-lg transition-shadow cursor-pointer"
-                  onMouseEnter={() => setHoveredCard(stat.title)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm text-gray-500">{stat.title}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-3xl font-bold text-gray-900">{stat.value}</span>
-                    {!stat.isChart && <TrendingUp className="w-5 h-5 text-purple-500" />}
-                  </div>
-                  {stat.subtext && <p className="text-xs text-gray-500 mb-3">{stat.subtext}</p>}
-                  {stat.isChart && (
-                    <div className="h-16 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={[{ value: 60 }, { value: 84 }]}>
-                          <Area type="monotone" dataKey="value" stroke="#2563eb" fill="#3b82f6" fillOpacity={0.2} />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
-                  <a href="#" className="text-sm text-purple-600 hover:underline flex items-center gap-1">
-                    {stat.link} <span>→</span>
-                  </a>
-                </motion.div>
-              ))}
-            </div>
+            {/* Today's single task */}
+            <TiltCard maxTilt={4} className="rounded-2xl p-5 mb-5" style={{ background: 'var(--ink-2)', border: '1px solid var(--line)' }}>
+              <div className="flex items-start justify-between mb-3">
+                <div className="eyebrow">Today's one task</div>
+                <span className="pill px-2.5 py-1 text-[10.5px] font-mono flex items-center gap-1" style={{ color: 'var(--gold)' }}>
+                  <Sparkles className="w-3 h-3" /> highest impact
+                </span>
+              </div>
+              <h3 className="font-display text-xl font-semibold mb-2" style={{ color: 'var(--text)' }}>
+                Fix the signup flow drop-off
+              </h3>
+              <p className="text-[13px] text-muted mb-4 leading-relaxed">
+                Roadmap says growth is bottlenecked at activation. This is the one thing today
+                that moves "First 10 users" forward the most.
+              </p>
+              <div className="flex items-center gap-3">
+                <button className="btn btn-primary py-2 px-4 text-[13px]">
+                  <Play className="w-3.5 h-3.5" /> Start focus session
+                </button>
+                <span className="text-[12px] text-faint font-mono">25:00</span>
+              </div>
+            </TiltCard>
 
-            {/* Customers & Growth */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {/* Customers List */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-semibold text-gray-900">Customers</h3>
-                  <button className="text-sm text-gray-500 flex items-center gap-1">
-                    Sort by Newest <ChevronDown className="w-4 h-4" />
-                  </button>
-                </div>
+            <div className="grid md:grid-cols-2 gap-5">
+              {/* Roadmap milestones */}
+              <TiltCard maxTilt={5} className="rounded-2xl p-4" style={{ background: 'var(--ink-2)', border: '1px solid var(--line)' }}>
+                <h4 className="text-[13px] font-semibold mb-4" style={{ color: 'var(--text)' }}>Roadmap · First 10 users</h4>
                 <div className="space-y-3">
-                  {customers.map((customer, idx) => (
-                    <div
-                      key={customer.name}
-                      className={`flex items-center justify-between p-3 rounded-xl ${
-                        customer.active ? 'bg-purple-50 border border-purple-100' : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full ${customer.avatar}`} />
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{customer.name}</p>
-                          <p className="text-xs text-gray-500">{customer.company}</p>
-                        </div>
-                      </div>
-                      {customer.active && (
-                        <div className="flex items-center gap-2">
-                          <button className="p-1.5 hover:bg-white rounded-lg"><Search className="w-4 h-4 text-gray-400" /></button>
-                          <button className="p-1.5 hover:bg-white rounded-lg"><Star className="w-4 h-4 text-purple-500 fill-purple-500" /></button>
-                          <button className="p-1.5 hover:bg-white rounded-lg"><Edit className="w-4 h-4 text-gray-400" /></button>
-                          <button className="p-1.5 hover:bg-white rounded-lg"><MoreHorizontal className="w-4 h-4 text-gray-400" /></button>
-                        </div>
+                  {milestones.map((m) => (
+                    <div key={m.label} className="flex items-center gap-3">
+                      {m.done ? (
+                        <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: 'var(--violet)' }} />
+                      ) : (
+                        <Circle className="w-4 h-4 shrink-0" style={{ color: m.current ? 'var(--gold)' : 'var(--text-faint)' }} />
                       )}
+                      <span className="text-[12.5px]" style={{ color: m.done ? 'var(--text-faint)' : 'var(--text)', textDecoration: m.done ? 'line-through' : 'none' }}>
+                        {m.label}
+                      </span>
+                      {m.current && <span className="ml-auto text-[10px] font-mono gold-text">now</span>}
                     </div>
                   ))}
                 </div>
-                <a href="#" className="text-sm text-purple-600 mt-4 inline-flex items-center gap-1">
-                  All customers <span>→</span>
-                </a>
-              </div>
+              </TiltCard>
 
-              {/* Growth Chart */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-semibold text-gray-900">Growth</h3>
-                  <button className="text-sm text-gray-500 flex items-center gap-1">
-                    Yearly <ChevronDown className="w-4 h-4" />
-                  </button>
+              {/* Progress chart */}
+              <TiltCard maxTilt={5} className="rounded-2xl p-4" style={{ background: 'var(--ink-2)', border: '1px solid var(--line)' }}>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-[13px] font-semibold" style={{ color: 'var(--text)' }}>Momentum</h4>
+                  <span className="text-[11px] font-mono gold-text">+62%</span>
                 </div>
-                <div className="h-48">
+                <div className="h-20">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={growthData}>
+                    <AreaChart data={roadmapProgress}>
                       <defs>
-                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        <linearGradient id="momentumGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#8335FD" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="#8335FD" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                      <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
+                      <Area type="monotone" dataKey="v" stroke="#8335FD" strokeWidth={2} fill="url(#momentumGradient)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Top month</p>
-                    <p className="text-lg font-bold text-purple-600">November</p>
-                    <p className="text-xs text-gray-400">2019</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Top year</p>
-                    <p className="text-lg font-bold text-purple-600">2023</p>
-                    <p className="text-xs text-gray-400">96K sold so far</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1">Top buyer</p>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-emerald-600" />
-                      <div>
-                        <p className="text-xs font-medium text-gray-900">Maggie Johnson</p>
-                        <p className="text-xs text-gray-400">Oasis Organic Inc.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Chats */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                <h3 className="font-semibold text-gray-900 mb-1">Chats</h3>
-                <p className="text-xs text-gray-500 mb-4">2 unread messages</p>
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-10 h-10 rounded-full bg-gray-300 border-2 border-white" />
-                  ))}
-                </div>
-              </div>
-
-              {/* Top States */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                <h3 className="font-semibold text-gray-900 mb-4">Top states</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-700">NY</span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-1 mx-4">
-                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="w-[80%] h-full bg-purple-500 rounded-full" />
-                      </div>
-                    </div>
-                    <span className="text-xs text-gray-500">120K</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-700">MA</span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-1 mx-4">
-                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="w-[60%] h-full bg-purple-500 rounded-full" />
-                      </div>
-                    </div>
-                    <span className="text-xs text-gray-500">80K</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* New Deals */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                <h3 className="font-semibold text-gray-900 mb-4">New deals</h3>
-                <div className="flex flex-wrap gap-2">
-                  {['Fruit2Go', "Marshall's MKT", 'CCNT', 'Joana Mini-market'].map((deal) => (
-                    <span key={deal} className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-600 rounded-full text-xs font-medium">
-                      <span className="w-4 h-4 rounded-full bg-purple-200 flex items-center justify-center text-[10px]">+</span>
-                      {deal}
-                    </span>
-                  ))}
-                </div>
-              </div>
+                <p className="text-[11px] text-faint mt-2">Tasks finished, last 9 days</p>
+              </TiltCard>
             </div>
           </div>
         </div>

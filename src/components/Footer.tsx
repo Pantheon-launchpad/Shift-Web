@@ -1,40 +1,52 @@
-import { Plus } from 'lucide-react';
+import { FaXTwitter, FaLinkedin, FaInstagram } from 'react-icons/fa6';
+import logo from '../assets/logo.svg';
 
 const footerLinks = {
-  Sections: ['Features', 'Benefits', 'Integrations', 'Pricing', 'FAQ'],
-  Socials: ['Instagram', 'Twitter/X', 'LinkedIn'],
-  Pages: ['Home', 'Newsletter', 'Blogs', '404']
+  Product: ['How it works', 'Roadmaps', 'Focus sessions', 'Proof cards', 'Pricing'],
+  Company: ['About', 'Notes', 'Careers'],
+  Legal: ['Privacy', 'Terms'],
 };
+
+const socials = [
+  { Icon: FaXTwitter, label: 'X' },
+  { Icon: FaLinkedin, label: 'LinkedIn' },
+  { Icon: FaInstagram, label: 'Instagram' },
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-white border-t border-gray-200 py-16 px-4 sm:px-6 lg:px-8">
+    <footer className="py-16 px-4 sm:px-6 lg:px-8" style={{ borderTop: '1px solid var(--line)' }}>
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-          {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+          <div className="col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-purple-800 rounded-lg flex items-center justify-center">
-                <Plus className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">Shift</span>
+              <img src={logo} alt="Shift logo" className="w-7 h-7 rounded-lg" />
+              <span className="font-display font-semibold text-lg" style={{ color: 'var(--text)' }}>Shift</span>
             </div>
-            <p className="text-gray-600 text-sm mb-4">
-              Turn complex data into clear, actionable insights so you can make smarter decisions and drive growth with confidence
+            <p className="text-sm text-muted mb-5 max-w-xs leading-relaxed">
+              Most productivity apps help you plan. Shift helps you finish.
             </p>
-            <button className="bg-purple-800 text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-purple-800 transition-colors">
-              Get Template
-            </button>
+            <div className="flex items-center gap-2">
+              {socials.map((s) => (
+                <a
+                  key={s.label}
+                  href="#"
+                  aria-label={s.label}
+                  className="w-9 h-9 rounded-full flex items-center justify-center pill"
+                >
+                  <s.Icon className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                </a>
+              ))}
+            </div>
           </div>
 
-          {/* Links */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h4 className="font-semibold text-gray-900 mb-4">{category}</h4>
+              <h4 className="font-semibold text-[13px] mb-4" style={{ color: 'var(--text)' }}>{category}</h4>
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link}>
-                    <a href="#" className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
+                    <a href="#" className="text-[13px] text-muted hover:text-[var(--text)] transition-colors">
                       {link}
                     </a>
                   </li>
@@ -44,9 +56,9 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-gray-500"> by Tega</p>
-          <p className="text-sm text-gray-500">Built in Framer. © 2024 Shift</p>
+        <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4" style={{ borderTop: '1px solid var(--line)' }}>
+          <p className="text-[13px] text-faint">© 2026 Shift. Built for people who start things.</p>
+          <p className="text-[13px] text-faint">One task. Every day.</p>
         </div>
       </div>
     </footer>

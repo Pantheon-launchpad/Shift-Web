@@ -1,70 +1,70 @@
 import { motion } from 'framer-motion';
-import { Clock, LayoutDashboard, Send, Lock, FileText, MousePointer } from 'lucide-react';
+import { Focus, Activity, BellRing, Sparkles, Share2, RefreshCcw } from 'lucide-react';
+import TiltCard from './TiltCard';
 
 const benefits = [
   {
-    icon: Clock,
-    title: 'Real-Time Tracking',
-    description: 'Monitor user activity instantly for smarter decision-making.'
+    icon: Focus,
+    title: 'One tab open at a time',
+    description: 'A focus session with a timer and nothing else. No competing to-do lists fighting for your attention.',
   },
   {
-    icon: LayoutDashboard,
-    title: 'All-in-One View',
-    description: 'Keep all your analytics in one place, without jumping between tools.'
+    icon: Activity,
+    title: 'Progress tracked without asking',
+    description: 'Every finished task updates the roadmap automatically. You never have to log it twice.',
   },
   {
-    icon: Send,
-    title: 'Actionable Insights',
-    description: 'Track the metrics that matter most for sustainable business growth.'
+    icon: BellRing,
+    title: 'Someone checks in',
+    description: 'The nightly debrief is short, but it\u2019s there every day \u2014 the gentle accountability most apps skip.',
   },
   {
-    icon: Lock,
-    title: 'Secure Data',
-    description: 'Keep your analytics safe with advanced security and strong encryption.'
+    icon: Sparkles,
+    title: 'Gets sharper over time',
+    description: 'Shift remembers what worked, what stalled, and what you actually finish \u2014 and adjusts the roadmap accordingly.',
   },
   {
-    icon: FileText,
-    title: 'Custom Reports',
-    description: 'Create tailored reports that fit your needs and highlight key insights.'
+    icon: Share2,
+    title: 'Marketing you don\u2019t have to do',
+    description: 'Your build-in-public post is already written by the time you\u2019d normally start dreading writing it.',
   },
   {
-    icon: MousePointer,
-    title: 'Simple to Use',
-    description: 'Navigate easily—no steep learning curve, start making better decisions quickly.'
-  }
+    icon: RefreshCcw,
+    title: 'The plan moves when life does',
+    description: 'Miss a day, change direction, get a new idea \u2014 the roadmap adapts instead of guilting you back to page one.',
+  },
 ];
 
 export default function Benefits() {
   return (
-    <section id="benefits" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-gray-50/50">
+    <section id="benefits" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="text-center mb-16">
-        <span className="inline-block px-4 py-1.5 bg-purple-50 text-purple-600 rounded-full text-sm font-medium mb-4">
-          Benefits
-        </span>
-        <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-          Benefits That Truly<br />Matter To You
+        <div className="eyebrow justify-center mb-4">Why it holds up</div>
+        <h2 className="font-display font-semibold mb-4" style={{ fontSize: 'clamp(1.9rem, 3.4vw, 2.75rem)', color: 'var(--text)' }}>
+          The parts that make people stick around
         </h2>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          Monitor metrics as they happen, so you can respond quickly and keep your goals on track.
+        <p className="text-muted max-w-xl mx-auto leading-relaxed">
+          None of this is flashy. It\u2019s just the difference between a tool you open once and a tool you use daily.
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 perspective">
         {benefits.map((benefit, idx) => (
-          <motion.div
+          <TiltCard
             key={benefit.title}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: idx * 0.1 }}
-            className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-shadow"
+            transition={{ delay: idx * 0.08 }}
+            maxTilt={7}
+            className="card p-6"
           >
-            <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mb-4">
-              <benefit.icon className="w-6 h-6 text-purple-600" />
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-5" style={{ background: 'var(--glass-strong)', border: '1px solid var(--glass-border)' }}>
+              <benefit.icon className="w-5 h-5" style={{ color: 'var(--violet)' }} />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">{benefit.title}</h3>
-            <p className="text-gray-600 text-sm leading-relaxed">{benefit.description}</p>
-          </motion.div>
+            <h3 className="text-[16px] font-display font-semibold mb-2" style={{ color: 'var(--text)' }}>{benefit.title}</h3>
+            <p className="text-[13.5px] leading-relaxed text-muted">{benefit.description}</p>
+          </TiltCard>
         ))}
       </div>
     </section>

@@ -1,94 +1,95 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
+import TiltCard from './TiltCard';
 
 const plans = [
   {
     name: 'Starter',
+    price: 0,
+    description: 'For your first goal, and finding out if this actually works for you.',
+    features: ['1 active roadmap', 'Daily task + focus timer', 'Nightly debrief', 'Basic proof cards'],
+  },
+  {
+    name: 'Pro',
+    price: 15,
+    description: 'For the goal you\u2019re actually serious about right now.',
+    features: ['Unlimited roadmaps', 'AI goal interview', 'Full memory across days', 'Build-in-public generator', 'Everything in Starter'],
+    popular: true,
+  },
+  {
+    name: 'Teams',
     price: 39,
-    description: 'Great for small teams getting started.',
-    features: ['5,000 tracked users', 'Core analytics', 'Simple dashboards', 'Email support', 'Weekly reports']
+    description: 'For small teams shipping toward one goal together.',
+    features: ['Shared roadmaps', 'Team streaks', 'Priority support', 'Everything in Pro'],
   },
-  {
-    name: 'Growth',
-    price: 99,
-    description: 'For fast-growing teams who are scaling.',
-    features: ['50,000 tracked users', 'Funnel & drop-off analysis', 'Custom dashboards', 'Team collaboration tools', 'Everything in Starter'],
-    popular: true
-  },
-  {
-    name: 'Premium',
-    price: 299,
-    description: 'Great for enterprises to convert more.',
-    features: ['Unlimited tracked users', 'Dedicated account manager', 'SLA & compliance support', 'Advanced integrations', 'All Growth features']
-  }
 ];
 
 export default function Pricing() {
   const [isYearly, setIsYearly] = useState(false);
 
   return (
-    <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <section id="pricing" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="text-center mb-16">
-        <span className="inline-block px-4 py-1.5 bg-purple-50 text-purple-600 rounded-full text-sm font-medium mb-4">
-          Our Pricing
-        </span>
-        <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-          Choose The Best<br />Plan That Suites You
+        <div className="eyebrow justify-center mb-4">Pricing</div>
+        <h2 className="font-display font-semibold mb-4" style={{ fontSize: 'clamp(1.9rem, 3.4vw, 2.75rem)', color: 'var(--text)' }}>
+          Simple, like the product
         </h2>
-        <p className="text-gray-600 mb-8">
-          Flexible pricing built for every stage — from startup to scale, no hidden fees.
+        <p className="text-muted mb-8 max-w-md mx-auto">
+          Start free. Upgrade when the roadmap becomes something you actually rely on.
         </p>
 
-        <div className="flex items-center justify-center gap-4">
-          <span className={`text-sm ${!isYearly ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>Monthly</span>
+        <div className="inline-flex items-center gap-4 pill px-4 py-2.5">
+          <span className="text-sm" style={{ color: !isYearly ? 'var(--text)' : 'var(--text-muted)', fontWeight: !isYearly ? 600 : 400 }}>Monthly</span>
           <button
             onClick={() => setIsYearly(!isYearly)}
-            className="relative w-14 h-7 bg-purple-800 rounded-full transition-colors"
+            className="relative w-11 h-6 rounded-full transition-colors"
+            style={{ background: 'var(--violet)' }}
           >
-            <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${isYearly ? 'translate-x-7' : 'translate-x-1'}`} />
+            <div className="absolute top-1 w-4 h-4 bg-white rounded-full transition-transform" style={{ transform: isYearly ? 'translateX(22px)' : 'translateX(4px)' }} />
           </button>
-          <span className={`text-sm ${isYearly ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>Yearly</span>
-          {isYearly && <span className="text-xs text-purple-900 bg-purple-50 px-2 py-1 rounded-full">Save 20%</span>}
+          <span className="text-sm" style={{ color: isYearly ? 'var(--text)' : 'var(--text-muted)', fontWeight: isYearly ? 600 : 400 }}>Yearly</span>
+          {isYearly && <span className="text-xs gold-text font-mono">save 20%</span>}
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto perspective">
         {plans.map((plan, idx) => (
-          <motion.div
+          <TiltCard
             key={plan.name}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: idx * 0.1 }}
-            className={`relative bg-white rounded-3xl p-6 border ${plan.popular ? 'border-purple-900 shadow-xl shadow-purple-500/10' : 'border-gray-200'}`}
+            maxTilt={plan.popular ? 10 : 7}
+            className={plan.popular ? 'glass-strong rounded-3xl p-6 relative' : 'card p-6 relative'}
+            style={plan.popular ? { border: '1px solid rgba(131,53,253,0.4)' } : undefined}
           >
             {plan.popular && (
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-900 text-white text-xs font-medium px-3 py-1 rounded-full">
-                Most Popular
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-white text-xs font-medium px-3 py-1 rounded-full" style={{ background: 'linear-gradient(135deg, #9653fd, #6629c5)' }}>
+                Most used
               </span>
             )}
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{plan.name}</h3>
+            <h3 className="text-base font-semibold mb-2" style={{ color: 'var(--text)' }}>{plan.name}</h3>
             <div className="flex items-baseline gap-1 mb-2">
-              <span className="text-4xl font-bold text-gray-900">${isYearly ? Math.round(plan.price * 0.8) : plan.price}</span>
-              <span className="text-gray-500">/month</span>
+              <span className="font-display text-4xl font-semibold" style={{ color: 'var(--text)' }}>${isYearly ? Math.round(plan.price * 0.8) : plan.price}</span>
+              <span className="text-muted text-sm">/month</span>
             </div>
-            <p className="text-sm text-gray-600 mb-6">{plan.description}</p>
+            <p className="text-[13px] text-muted mb-6">{plan.description}</p>
 
-            <p className="text-sm font-medium text-gray-900 mb-4">What's included</p>
-            <ul className="space-y-3 mb-6">
+            <ul className="space-y-3 mb-7">
               {plan.features.map((feature) => (
-                <li key={feature} className="flex items-center gap-3 text-sm text-gray-600">
-                  <Check className="w-4 h-4 text-purple-800" />
+                <li key={feature} className="flex items-center gap-3 text-[13.5px]" style={{ color: 'var(--text)' }}>
+                  <Check className="w-4 h-4 shrink-0" style={{ color: 'var(--violet)' }} />
                   {feature}
                 </li>
               ))}
             </ul>
 
-            <button className={`w-full py-3 rounded-full font-medium transition-colors ${plan.popular ? 'bg-purple-900 text-white hover:bg-purple-800' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}>
-              Get Started
+            <button className={plan.popular ? 'btn btn-primary w-full justify-center' : 'btn btn-ghost w-full justify-center'}>
+              {plan.price === 0 ? 'Start free' : 'Get started'}
             </button>
-          </motion.div>
+          </TiltCard>
         ))}
       </div>
     </section>

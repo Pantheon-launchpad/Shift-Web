@@ -1,75 +1,69 @@
-// integrations.tsx
 'use client';
 
 import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
+import { FaXTwitter, FaLinkedin } from 'react-icons/fa6';
 
-const integrations = [
-  { name: 'Nuvio', color: 'bg-purple-500', icon: 'N' },
-  { name: 'Klyra', color: 'bg-orange-500', icon: 'K' },
-  { name: 'Knot', color: 'bg-gray-800', icon: 'K' },
-  { name: 'Veltix', color: 'bg-purple-400', icon: 'V' },
+const cards = [
+  { day: 'Day 12', text: 'Finished the landing page copy and fixed the mobile nav.', platform: FaXTwitter },
+  { day: 'Day 27', text: 'Shipped auth, wrote docs, closed 3 open bugs.', platform: FaLinkedin },
+  { day: 'Day 41', text: 'Fixed signup drop-off. Activation up for the week.', platform: FaXTwitter },
+  { day: 'Day 55', text: 'Hit first 10 paying users. Roadmap milestone cleared.', platform: FaLinkedin },
 ];
 
-export default function Integrations() {
-  const duplicatedIntegrations = [...integrations, ...integrations, ...integrations];
+const duplicated = [...cards, ...cards, ...cards];
 
+export default function Integrations() {
   return (
-    <section id="integrations" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="grid lg:grid-cols-2 gap-12 items-center">
+    <section id="proof" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="grid lg:grid-cols-2 gap-14 items-center">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
         >
-          <span className="inline-block px-4 py-1.5 bg-purple-50 text-purple-600 rounded-full text-sm font-medium mb-4">
-            Integrations
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            Seamless Integrations
+          <div className="eyebrow mb-4">The build-in-public generator</div>
+          <h2 className="font-display font-semibold mb-4" style={{ fontSize: 'clamp(1.9rem, 3.4vw, 2.75rem)', color: 'var(--text)' }}>
+            The record writes itself
           </h2>
-          <p className="text-gray-600 mb-8">
-            Connect Alytics with your favorite tools to streamline workflows and keep everything running smoothly.
+          <p className="text-muted mb-8 leading-relaxed">
+            You already do the work. Shift turns the daily debrief into a clean update
+            you can post to X or LinkedIn in one tap \u2014 or just keep as a private log
+            you\u2019ll actually want to reread.
           </p>
-          <button className="bg-purple-900 text-white px-6 py-3 rounded-full font-medium hover:bg-purple-700 transition-colors">
-            Get Started Now
-          </button>
+          <button className="btn btn-primary py-3.5 px-6">Try the generator</button>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
-          className="bg-white rounded-3xl p-6 border border-gray-200 shadow-lg overflow-hidden h-80 relative"
+          className="glass-strong rounded-3xl p-5 h-96 relative overflow-hidden"
+          style={{ boxShadow: 'var(--shadow-lift)' }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white z-10 pointer-events-none" />
-          
-          <motion.div 
+          <div className="absolute inset-x-0 top-0 h-16 z-10 pointer-events-none" style={{ background: 'linear-gradient(var(--ink-2), transparent)' }} />
+          <div className="absolute inset-x-0 bottom-0 h-16 z-10 pointer-events-none" style={{ background: 'linear-gradient(0deg, var(--ink-2), transparent)' }} />
+
+          <motion.div
             className="space-y-4"
-            animate={{ y: [0, -200] }}
-            transition={{ 
-              duration: 15, 
-              repeat: Infinity, 
-              ease: "linear",
-              repeatType: "loop"
-            }}
+            animate={{ y: [0, -260] }}
+            transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
           >
-            {duplicatedIntegrations.map((integration, idx) => (
-              <motion.div 
-                key={`${integration.name}-${idx}`} 
-                className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors cursor-pointer"
-                whileHover={{ scale: 1.02, x: 10 }}
+            {duplicated.map((c, idx) => (
+              <motion.div
+                key={`${c.day}-${idx}`}
+                className="flex items-start gap-3.5 p-4 rounded-2xl"
+                style={{ background: 'var(--ink-1)', border: '1px solid var(--line)' }}
+                whileHover={{ x: 4 }}
               >
-                <div className={`w-12 h-12 ${integration.color} rounded-xl flex items-center justify-center`}>
-                  <span className="text-white font-bold text-lg">{integration.icon}</span>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #9653fd, var(--gold))' }}>
+                  <c.platform className="w-4 h-4 text-white" />
                 </div>
-                <div className="flex-1">
-                  <div className="h-2 bg-gray-200 rounded-full w-3/4 mb-2" />
-                  <div className="h-2 bg-gray-200 rounded-full w-1/2" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-mono text-faint mb-1">{c.day}</p>
+                  <p className="text-[13px] leading-snug" style={{ color: 'var(--text)' }}>{c.text}</p>
                 </div>
-                <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
-                  <Check className="w-4 h-4 text-white" />
-                </div>
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-1" style={{ color: 'var(--violet)' }} />
               </motion.div>
             ))}
           </motion.div>
