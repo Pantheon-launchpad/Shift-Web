@@ -3,9 +3,28 @@
 @theme {
   --color-primary: #2563eb;
   --color-primary-light: #3b82f6;
-  --color-bg: #f8fafc;
-  --color-card: #ffffff;
-  --color-text: #1e293b;
-  --color-text-muted: #64748b;
-  --color-border: #e2e8f0;
+}
+
+@layer base {
+  :root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --surface: #f1f5f9;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+  }
+  
+  .dark {
+    --bg: #0a0a0a;
+    --card: #141414;
+    --surface: #1a1a1a;
+    --text: #fafafa;
+    --text-muted: #a1a1aa;
+    --border: #27272a;
+  }
+  
+  body {
+    @apply bg-[var(--bg)] text-[var(--text)] transition-colors duration-300;
+  }
 }
