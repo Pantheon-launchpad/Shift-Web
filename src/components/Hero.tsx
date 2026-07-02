@@ -43,7 +43,7 @@ export default function Hero({ onGetStarted }: { onGetStarted?: () => void }) {
           </motion.p>
 
           <motion.div {...fadeUp} transition={{ duration: 0.6, delay: 0.25 }} className="flex flex-wrap items-center gap-4">
-            <button className="btn btn-primary text-[15px] py-3.5 px-6">
+            <button onClick={onGetStarted} className="btn btn-primary text-[15px] py-3.5 px-6">
               Start your roadmap <ArrowRight className="w-4 h-4" />
             </button>
             <button className="btn btn-ghost text-[15px] py-3.5 px-6">

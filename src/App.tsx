@@ -16,7 +16,9 @@ import Newsletter from "./components/Newsletter";
 import Footer from "./components/Footer";
 import ShiftAuth from "./pages/auth";
 import ShiftDash from "./pages/dash";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+const queryClient = new QueryClient();
 function App() {
   const [view, setView] = useState<"landing" | "auth" | "dash">("landing");
 
@@ -44,7 +46,7 @@ function App() {
 
         <div className="relative z-10">
           <Navbar />
-          <Hero />
+          <Hero onGetStarted={handleGetStarted}/>
           <DashboardPreview />
           <LogoCloud />
           <Features />
