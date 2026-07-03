@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Focus, Activity, BellRing, Sparkles, Share2, RefreshCcw } from 'lucide-react';
 import TiltCard from './TiltCard';
 

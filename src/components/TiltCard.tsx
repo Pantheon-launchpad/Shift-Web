@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import type { ReactNode } from 'react';
 import {
   motion,
   useMotionValue,
@@ -8,7 +9,8 @@ import {
   type HTMLMotionProps,
 } from 'framer-motion';
 
-interface TiltCardProps extends HTMLMotionProps<'div'> {
+interface TiltCardProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
+  children?: ReactNode;
   maxTilt?: number;
   glare?: boolean;
   lift?: boolean;

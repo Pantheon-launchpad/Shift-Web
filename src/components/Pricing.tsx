@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import TiltCard from './TiltCard';
 

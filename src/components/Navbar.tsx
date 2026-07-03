@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Menu, X, Moon, Sun, ArrowUpRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useStore } from '../stores/useStore';
 import logo from '../assets/logo.svg';
 
@@ -17,6 +18,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState('#product');
   const { theme, toggleTheme } = useStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -114,7 +116,7 @@ export default function Navbar() {
             </AnimatePresence>
           </button>
 
-          <button className="btn btn-primary hidden md:inline-flex text-[13px] py-2 px-4">
+          <button onClick={() => navigate('/login')} className="btn btn-primary hidden md:inline-flex text-[13px] py-2 px-4">
             Start free <ArrowUpRight className="w-3.5 h-3.5" />
           </button>
 
@@ -150,7 +152,7 @@ export default function Navbar() {
                   {link.name}
                 </a>
               ))}
-              <button className="btn btn-primary w-full mt-2 justify-center">Start free</button>
+              <button onClick={() => navigate('/login')} className="btn btn-primary w-full mt-2 justify-center">Start free</button>
             </div>
           </motion.div>
         )}

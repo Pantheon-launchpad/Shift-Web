@@ -8,7 +8,6 @@ import {
   Timer,
   MessageSquare,
   Share2,
-  Settings,
   ChevronRight,
   Flame,
   Play,

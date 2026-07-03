@@ -1,141 +1,88 @@
-import { useState } from "react";
-import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import DashboardPreview from "./components/DashboardPreview";
-import LogoCloud from "./components/LogoCloud";
-import Features from "./components/Features";
-import Benefits from "./components/Benefits";
-import HowItWorks from "./components/HowItWorks";
-import Integrations from "./components/Integrations";
-import Testimonials from "./components/Testimonials";
-import Pricing from "./components/Pricing";
-import Comparison from "./components/Comparison";
-import FAQ from "./components/FAQ";
-import Blog from "./components/Blog";
-import Newsletter from "./components/Newsletter";
-import Footer from "./components/Footer";
-import ShiftAuth from "./pages/auth";
-import GoalIntake from "./components/GoalIntake";
-import ShiftDash from "./pages/dash";
-import DebriefScreen from "./components/DebriefScreen";
-import ResultScreen from "./components/ResultScreen";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import Landing from './pages/Landing';
+import Login from './pages/Login';
+import ProtectedRoute from './components/app/ProtectedRoute';
+import AppLayout from './pages/app/AppLayout';
+import Dashboard from './pages/app/Dashboard';
+import Goals from './pages/app/Goals';
+import Roadmap from './pages/app/Roadmap';
+import Activity from './pages/app/Activity';
+import BuildInPublic from './pages/app/BuildInPublic';
+import Analytics from './pages/app/Analytics';
+import Settings from './pages/app/Settings';
+import GoalCreation from './pages/app/GoalCreation';
+import FocusSession from './components/app/FocusSession';
+import Debrief from './pages/app/Debrief';
+import ShareResult from './pages/app/ShareResult';
+import { useAppStore } from './stores/useAppStore';
 
-const queryClient = new QueryClient();
-
-function App() {
-  const [view, setView] = useState<
-    "landing" | "auth" | "goal" | "dash" | "debrief" | "result"
-  >("landing");
-
-  // Store data across screens
-  const [goalData, setGoalData] = useState<{
-    goal: string;
-    roadmap: any;
-  } | null>(null);
-  const [debriefData, setDebriefData] = useState<any>(null);
-  const [taskTitle, setTaskTitle] = useState("");
-
-  // Handlers
-  const handleGetStarted = () => setView("auth");
-  const handleAuthSuccess = () => setView("goal");
-
-  const handleGoalComplete = (goal: string, roadmap: any) => {
-    setGoalData({ goal, roadmap });
-    setTaskTitle(roadmap.todayTask?.title || "Build the landing page");
-    setView("dash");
-  };
-
-  // 👇 NEW: Called from dashboard when focus session ends
-  const handleFocusEnd = () => {
-    setView("debrief");
-  };
-
-  // 👇 NEW: Called from debrief when submitted
-  const handleDebriefComplete = (debrief: {
-    rawText: string;
-    link?: string;
-    aiSummary: string;
-  }) => {
-    setDebriefData(debrief);
-    setView("result");
-  };
-
-  // 👇 NEW: Called from result when "Done for today" is clicked
-  const handleDoneToday = () => {
-    setView("dash");
-  };
-
-  // Auth screen
-  if (view === "auth") {
-    return <ShiftAuth onAuthSuccess={handleAuthSuccess} />;
-  }
-
-  // Goal Intake
-  if (view === "goal") {
-    return <GoalIntake onComplete={handleGoalComplete} />;
-  }
-
-  // Debrief
-  if (view === "debrief") {
-    return (
-      <DebriefScreen taskTitle={taskTitle} onComplete={handleDebriefComplete} />
-    );
-  }
-
-  // Result
-  if (view === "result") {
-    return (
-      <ResultScreen
-        goal={goalData?.goal || "Launch your startup"}
-        milestone={
-          goalData?.roadmap?.milestones?.find(
-            (m: any) => m.status === "current"
-          )?.title || "Current milestone"
-        }
-        streak={6}
-        debriefSummary={debriefData?.aiSummary || ""}
-        onDone={handleDoneToday}
-      />
-    );
-  }
-
-  // Dashboard
-  if (view === "dash") {
-    return <ShiftDash goalData={goalData} onFocusEnd={handleFocusEnd} />;
-  }
-
-   // Landing page
-   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="relative min-h-screen">
-        {/* Fixed ambient background, shared across the whole page */}
-        <div className="shift-canvas">
-          <div className="orb" style={{ width: 560, height: 560, top: -180, left: '8%', background: 'radial-gradient(circle, #8335FD, transparent 70%)' }} />
-          <div className="orb" style={{ width: 480, height: 480, top: 260, right: '2%', background: 'radial-gradient(circle, #f2b84b, transparent 70%)', opacity: 0.14 }} />
-          <div className="orb" style={{ width: 640, height: 640, bottom: -260, left: '30%', background: 'radial-gradient(circle, #4b3fb0, transparent 70%)' }} />
-        </div>
-
-        <div className="relative z-10">
-          <Navbar />
-          <Hero onGetStarted={handleGetStarted}/>
-          <DashboardPreview />
-          <LogoCloud />
-          <Features />
-          <HowItWorks />
-          <Benefits />
-          <Integrations />
-          <Testimonials />
-          <Comparison />
-          <Pricing />
-          <FAQ />
-          <Blog />
-          <Newsletter />
-          <Footer />
-        </div>
-      </div>
-    </QueryClientProvider>
-  );
+function LoginRoute() {
+  const isAuthenticated = useAppStore((s) => s.isAuthenticated);
+  if (isAuthenticated) return <Navigate to="/app" replace />;
+  return <Login />;
 }
 
-export default App;
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<LoginRoute />} />
+
+        {/* Persistent multi-page workspace: sidebar + topbar chrome */}
+        <Route
+          path="/app"
+          element={
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="goals" element={<Goals />} />
+          <Route path="roadmap" element={<Roadmap />} />
+          <Route path="activity" element={<Activity />} />
+          <Route path="build-in-public" element={<BuildInPublic />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
+
+        {/* Ephemeral, distraction-free full-bleed screens: no sidebar/topbar */}
+        <Route
+          path="/app/goals/new"
+          element={
+            <ProtectedRoute>
+              <GoalCreation />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/focus"
+          element={
+            <ProtectedRoute>
+              <FocusSession />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/debrief"
+          element={
+            <ProtectedRoute>
+              <Debrief />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/share"
+          element={
+            <ProtectedRoute>
+              <ShareResult />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
