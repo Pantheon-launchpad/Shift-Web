@@ -40,23 +40,23 @@
 }
 
 html.light {
-  --ink: #f6f5f1;
+  --ink: #edeae4;
   --ink-1: #ffffff;
   --ink-2: #ffffff;
   --ink-3: #fbfaf7;
-  --line: rgba(15, 15, 20, 0.09);
-  --line-strong: rgba(15, 15, 20, 0.16);
+  --line: rgba(15, 15, 20, 0.12);
+  --line-strong: rgba(15, 15, 20, 0.22);
 
   --text: #17181c;
   --text-muted: #5b5c63;
-  --text-faint: #92939a;
+  --text-faint: #86878e;
 
-  --glass: rgba(255, 255, 255, 0.55);
-  --glass-strong: rgba(255, 255, 255, 0.75);
-  --glass-border: rgba(15, 15, 20, 0.08);
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-strong: rgba(255, 255, 255, 0.94);
+  --glass-border: rgba(15, 15, 20, 0.10);
 
-  --shadow-soft: 0 1px 1px rgba(15,15,20,0.03), 0 8px 24px -10px rgba(15,15,20,0.18);
-  --shadow-lift: 0 1px 1px rgba(15,15,20,0.04), 0 24px 48px -16px rgba(15,15,20,0.22);
+  --shadow-soft: 0 1px 2px rgba(15,15,20,0.05), 0 10px 24px -10px rgba(15,15,20,0.16);
+  --shadow-lift: 0 1px 2px rgba(15,15,20,0.06), 0 28px 52px -16px rgba(15,15,20,0.20);
 
   color-scheme: light;
 }
@@ -174,7 +174,8 @@ html.light .glass-strong {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
     inset 0 -1px 0 rgba(15, 15, 20, 0.05),
-    0 1px 1px rgba(15, 15, 20, 0.03);
+    0 1px 2px rgba(15, 15, 20, 0.04),
+    0 16px 32px -14px rgba(15, 15, 20, 0.16);
 }
 
 .perspective { perspective: 1200px; }
