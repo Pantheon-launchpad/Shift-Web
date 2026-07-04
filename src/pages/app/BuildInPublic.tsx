@@ -3,6 +3,7 @@ import { Check, Copy, Download, RefreshCcw, Share2 } from 'lucide-react';
 import { GlassCard } from '../../components/app/ui';
 import { useAppStore } from '../../stores/useAppStore';
 import type { BuildInPublicPost } from '../../stores/useAppStore';
+import { downloadCard } from '../../lib/downloadCard';
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -103,7 +104,10 @@ function PostCard({ post }: { post: BuildInPublicPost }) {
               Built with Shift
             </div>
           </div>
-          <button className="btn btn-ghost text-xs py-1.5 px-3 gap-1.5 mt-3">
+          <button
+            onClick={() => downloadCard({ headline: post.cardHeadline, subline: post.cardSubline, filename: `shift-${formatDate(post.date).replace(/\s/g, '-')}.png` })}
+            className="btn btn-ghost text-xs py-1.5 px-3 gap-1.5 mt-3"
+          >
             <Download size={13} /> Download card
           </button>
         </div>

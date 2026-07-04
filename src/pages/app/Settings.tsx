@@ -35,10 +35,12 @@ export default function Settings() {
   const toggleAiSuggestions = useAppStore((s) => s.toggleAiSuggestions);
   const toggleEmailReminders = useAppStore((s) => s.toggleEmailReminders);
   const signOut = useAppStore((s) => s.signOut);
+  const deleteAllData = useAppStore((s) => s.deleteAllData);
+  const connections = useAppStore((s) => s.connections);
+  const toggleConnection = useAppStore((s) => s.toggleConnection);
   const { theme, toggleTheme } = useStore();
 
   const [name, setName] = useState(userName);
-  const [connections, setConnections] = useState({ github: false, figma: false });
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const exportData = () => {
@@ -54,8 +56,13 @@ export default function Settings() {
     URL.revokeObjectURL(url);
   };
 
-  const handleDelete = () => {
+  const handleSignOut = () => {
     signOut();
+    navigate('/');
+  };
+
+  const handleDelete = () => {
+    deleteAllData();
     navigate('/');
   };
 
@@ -120,7 +127,7 @@ export default function Settings() {
               <span className="text-sm" style={{ color: 'var(--text)' }}>GitHub</span>
             </div>
             <button
-              onClick={() => setConnections((c) => ({ ...c, github: !c.github }))}
+              onClick={() => toggleConnection('github')}
               className="btn btn-ghost text-xs py-1.5 px-3"
             >
               {connections.github ? 'Disconnect' : 'Connect'}
@@ -132,7 +139,7 @@ export default function Settings() {
               <span className="text-sm" style={{ color: 'var(--text)' }}>Figma</span>
             </div>
             <button
-              onClick={() => setConnections((c) => ({ ...c, figma: !c.figma }))}
+              onClick={() => toggleConnection('figma')}
               className="btn btn-ghost text-xs py-1.5 px-3"
             >
               {connections.figma ? 'Disconnect' : 'Connect'}
@@ -155,13 +162,24 @@ export default function Settings() {
       </section>
 
       <section>
+        <SectionTitle>Session</SectionTitle>
+        <GlassCard className="flex items-center justify-between flex-wrap gap-3 p-5">
+          <div>
+            <p className="text-sm" style={{ color: 'var(--text)' }}>Sign out</p>
+            <p className="text-[12px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Your goals and history stay on this device &mdash; signing back in picks up where you left off.</p>
+          </div>
+          <button onClick={handleSignOut} className="btn btn-ghost text-xs py-1.5 px-3">Sign out</button>
+        </GlassCard>
+      </section>
+
+      <section>
         <SectionTitle>Danger zone</SectionTitle>
         <GlassCard style={{ borderColor: 'rgba(248,113,113,0.35)' }} className="p-5">
           {confirmingDelete ? (
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2" style={{ color: '#f87171' }}>
                 <AlertTriangle size={15} />
-                <p className="text-sm">This deletes all local goals, activity, and posts. This can&rsquo;t be undone.</p>
+                <p className="text-sm">This erases every goal, streak, activity entry, and post stored on this device. It can&rsquo;t be undone &mdash; export your data first if you want a copy.</p>
               </div>
               <div className="flex gap-2">
                 <PrimaryButton onClick={handleDelete} style={{ background: '#f87171' }}>Yes, delete everything</PrimaryButton>
@@ -171,8 +189,8 @@ export default function Settings() {
           ) : (
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <p className="text-sm" style={{ color: 'var(--text)' }}>Delete account</p>
-                <p className="text-[12px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Permanently remove your data from this device.</p>
+                <p className="text-sm" style={{ color: 'var(--text)' }}>Delete all data</p>
+                <p className="text-[12px] mt-0.5" style={{ color: 'var(--text-muted)' }}>Permanently erase everything stored on this device.</p>
               </div>
               <button onClick={() => setConfirmingDelete(true)} className="btn btn-ghost text-xs py-1.5 px-3 gap-1.5" style={{ color: '#f87171' }}>
                 <Trash2 size={13} /> Delete

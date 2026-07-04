@@ -1,4 +1,28 @@
-import type { ReactNode, ButtonHTMLAttributes, InputHTMLAttributes, CSSProperties } from 'react';
+import type { ReactNode, InputHTMLAttributes, CSSProperties } from 'react';
+import { motion, type HTMLMotionProps } from 'framer-motion';
+
+/** Staggered fade-up entrance for dashboard sections. Subtle by design \u2014
+ * a little lift and fade, never a slide or bounce. */
+export function FadeUp({
+  children,
+  delay = 0,
+  className = '',
+}: {
+  children: ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 /** Full-bleed centered layout used by every focused, single-purpose screen
  * (login, goal creation, focus session, debrief, share). */
@@ -16,13 +40,19 @@ export function GlassCard({
   children,
   className = '',
   style,
+  hover = false,
 }: {
   children: ReactNode;
   className?: string;
   style?: CSSProperties;
+  /** Subtle lift + shadow on hover, for cards that represent a clickable/navigable item. */
+  hover?: boolean;
 }) {
   return (
-    <div className={`glass-strong rounded-3xl p-7 sm:p-9 ${className}`} style={{ boxShadow: 'var(--shadow-lift)', ...style }}>
+    <div
+      className={`glass-strong rounded-3xl p-7 sm:p-9 ${hover ? 'transition-all duration-200 hover:-translate-y-0.5' : ''} ${className}`}
+      style={{ boxShadow: 'var(--shadow-lift)', ...style }}
+    >
       {children}
     </div>
   );
@@ -59,11 +89,17 @@ export function PrimaryButton({
   children,
   className = '',
   ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { children: ReactNode }) {
+}: Omit<HTMLMotionProps<'button'>, 'children'> & { children: ReactNode }) {
   return (
-    <button className={`btn btn-primary justify-center ${className}`} {...rest}>
+    <motion.button
+      whileHover={{ y: -1 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ duration: 0.15 }}
+      className={`btn btn-primary justify-center ${className}`}
+      {...rest}
+    >
       {children}
-    </button>
+    </motion.button>
   );
 }
 
@@ -71,11 +107,17 @@ export function GhostButton({
   children,
   className = '',
   ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { children: ReactNode }) {
+}: Omit<HTMLMotionProps<'button'>, 'children'> & { children: ReactNode }) {
   return (
-    <button className={`btn btn-ghost justify-center ${className}`} {...rest}>
+    <motion.button
+      whileHover={{ y: -1 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ duration: 0.15 }}
+      className={`btn btn-ghost justify-center ${className}`}
+      {...rest}
+    >
       {children}
-    </button>
+    </motion.button>
   );
 }
 
@@ -83,10 +125,12 @@ export function ProgressBar({ value }: { value: number }) {
   const clamped = Math.min(100, Math.max(0, value));
   return (
     <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--line)' }}>
-      <div
-        className="h-full rounded-full transition-all duration-700"
+      <motion.div
+        className="h-full rounded-full"
+        initial={false}
+        animate={{ width: `${clamped}%` }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         style={{
-          width: `${clamped}%`,
           background: 'linear-gradient(90deg, var(--violet), #9653fd)',
           boxShadow: '0 0 16px rgba(131,53,253,0.45)',
         }}

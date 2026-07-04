@@ -4,18 +4,21 @@ import { Check, Copy, Download } from 'lucide-react';
 import Background from '../../components/app/Background';
 import { FocusedScreen, GlassCard } from '../../components/app/ui';
 import { useAppStore } from '../../stores/useAppStore';
+import { downloadCard } from '../../lib/downloadCard';
 
 export default function ShareResult() {
   const navigate = useNavigate();
   const activeGoal = useAppStore((s) => s.activeGoal());
-  const streak = useAppStore((s) => s.streak);
+  const streak = useAppStore((s) => s.streak());
   const lastDebrief = useAppStore((s) => s.lastDebrief);
-  const finishToday = useAppStore((s) => s.finishToday);
+  const publishPost = useAppStore((s) => s.publishPost);
+  const skipSharing = useAppStore((s) => s.skipSharing);
 
   const goalTitle = activeGoal?.title ?? 'my goal';
-  const milestone = activeGoal?.roadmap.milestones.find((m) => m.status === 'current')?.title ?? 'current milestone';
+  const milestone = activeGoal?.roadmap.milestones.find((m) => m.status === 'current' || m.status === 'done')?.title ?? 'current milestone';
   const summary = lastDebrief?.aiSummary ?? '';
-  const day = streak + 1;
+  // The debrief already logged today, so the streak reflects today's work.
+  const day = streak || 1;
 
   const posts = useMemo(
     () => ({
@@ -34,8 +37,13 @@ export default function ShareResult() {
     setTimeout(() => setCopied(null), 1800);
   };
 
-  const handleDone = () => {
-    finishToday({ goalTitle, twitter: posts.twitter, linkedin: posts.linkedin, cardHeadline: posts.cardHeadline, cardSubline: posts.cardSubline });
+  const handleShareAndFinish = () => {
+    publishPost({ goalTitle, twitter: posts.twitter, linkedin: posts.linkedin, cardHeadline: posts.cardHeadline, cardSubline: posts.cardSubline });
+    navigate('/app');
+  };
+
+  const handleSkip = () => {
+    skipSharing();
     navigate('/app');
   };
 
@@ -44,7 +52,9 @@ export default function ShareResult() {
       <Background />
       <GlassCard>
         <h2 className="font-display font-semibold text-[22px]" style={{ color: 'var(--text)' }}>Build in public</h2>
-        <p className="text-[13px] mt-1 mb-6" style={{ color: 'var(--text-muted)' }}>Your work is now proof. Share it with the world.</p>
+        <p className="text-[13px] mt-1 mb-6" style={{ color: 'var(--text-muted)' }}>
+          Today&rsquo;s task is already marked done &mdash; sharing it is optional. Turn it into proof, or skip straight back to your dashboard.
+        </p>
 
         <div className="flex flex-col gap-5">
           <PostBlock label="Twitter / X" text={posts.twitter} copied={copied === 'Twitter'} onCopy={() => copy(posts.twitter, 'Twitter')} />
@@ -61,14 +71,20 @@ export default function ShareResult() {
               <button onClick={() => copy(`${posts.cardHeadline}\n${posts.cardSubline}`, 'Card')} className="btn btn-ghost text-xs py-1.5 px-3 gap-1.5">
                 {copied === 'Card' ? <Check size={13} /> : <Copy size={13} />} {copied === 'Card' ? 'Copied' : 'Copy'}
               </button>
-              <button className="btn btn-ghost text-xs py-1.5 px-3 gap-1.5">
+              <button
+                onClick={() => downloadCard({ headline: posts.cardHeadline, subline: posts.cardSubline, filename: `shift-day-${day}.png` })}
+                className="btn btn-ghost text-xs py-1.5 px-3 gap-1.5"
+              >
                 <Download size={13} /> Download
               </button>
             </div>
           </div>
         </div>
 
-        <button onClick={handleDone} className="btn btn-primary w-full justify-center mt-7">Done for today</button>
+        <div className="flex gap-3 mt-7 flex-wrap">
+          <button onClick={handleShareAndFinish} className="btn btn-primary flex-1 min-w-[180px] justify-center">Share &amp; finish</button>
+          <button onClick={handleSkip} className="btn btn-ghost flex-1 min-w-[140px] justify-center">Skip sharing</button>
+        </div>
       </GlassCard>
     </FocusedScreen>
   );

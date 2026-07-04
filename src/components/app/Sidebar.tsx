@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Activity, BarChart3, Calendar, Flame, Map, Settings, Share2 } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore';
 import logo from '../../assets/logo.svg';
@@ -14,7 +15,7 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar() {
-  const streak = useAppStore((s) => s.streak);
+  const streak = useAppStore((s) => s.streak());
   const longestStreak = useAppStore((s) => s.longestStreak);
 
   return (
@@ -40,15 +41,25 @@ export default function Sidebar() {
                 : { color: 'var(--text-muted)', border: '1px solid transparent' }
             }
           >
-            <item.icon className="w-4 h-4" />
-            <span>{item.label}</span>
+            {({ isActive }) => (
+              <motion.span whileHover={{ x: isActive ? 0 : 2 }} transition={{ duration: 0.15 }} className="flex items-center gap-3">
+                <item.icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </motion.span>
+            )}
           </NavLink>
         ))}
       </nav>
 
       <div className="mt-auto pt-6" style={{ borderTop: '1px solid var(--line)' }}>
         <div className="flex items-center gap-2 mb-1">
-          <Flame className="w-3.5 h-3.5" style={{ color: 'var(--gold)' }} />
+          <motion.span
+            animate={streak > 0 ? { scale: [1, 1.18, 1] } : {}}
+            transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+            className="flex"
+          >
+            <Flame className="w-3.5 h-3.5" style={{ color: 'var(--gold)' }} />
+          </motion.span>
           <span className="text-[12px] font-mono" style={{ color: 'var(--text)' }}>{streak}-day streak</span>
         </div>
         <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
