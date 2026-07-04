@@ -19,7 +19,7 @@ export default function Goals() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-display font-semibold text-2xl" style={{ color: 'var(--text)' }}>Goals</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Manage your long-term goals and AI-generated roadmaps.</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Manage your long-term goals and their roadmaps.</p>
         </div>
         <PrimaryButton onClick={() => { startGoalCreation(); navigate('/app/goals/new'); }}>
           <Plus size={16} /> New goal
@@ -40,10 +40,12 @@ export default function Goals() {
             return (
               <GlassCard key={g.id} className="flex items-center justify-between gap-4 flex-wrap p-5">
                 <div className="flex items-start gap-3">
-                  {isActive && <CheckCircle2 size={16} color="var(--violet)" className="mt-0.5 shrink-0" />}
+                  {(isActive || g.completed) && <CheckCircle2 size={16} color={g.completed ? 'var(--gold)' : 'var(--violet)'} className="mt-0.5 shrink-0" />}
                   <div>
                     <p className="font-display font-semibold text-[15px]" style={{ color: 'var(--text)' }}>{g.title}</p>
-                    <p className="text-[12px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{progress}% complete &middot; {isActive ? 'Active' : 'Inactive'}</p>
+                    <p className="text-[12px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                      {progress}% complete &middot; {g.completed ? 'Finished' : isActive ? 'Active' : 'Inactive'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">

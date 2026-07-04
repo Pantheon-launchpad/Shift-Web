@@ -24,7 +24,9 @@ export default function Debrief() {
     if (!rawText.trim()) return;
     setLoading(true);
     setTimeout(() => {
-      const summary = `Got it. I marked "${taskTitle}" as done and moved your milestone forward.`;
+      const trimmed = rawText.trim();
+      const snippet = trimmed.length > 70 ? `${trimmed.slice(0, 70).trimEnd()}\u2026` : trimmed;
+      const summary = `Logged: \u201c${snippet}\u201d \u2014 marked "${taskTitle}" as done and moved your milestone forward.`;
       setAiSummary(summary);
       setLoading(false);
       setTimeout(() => {

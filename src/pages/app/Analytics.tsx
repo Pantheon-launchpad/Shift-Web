@@ -14,7 +14,7 @@ export default function Analytics() {
   const goals = useAppStore((s) => s.goals);
   const activeGoal = useAppStore((s) => s.activeGoal());
   const activityLog = useAppStore((s) => s.activityLog);
-  const streak = useAppStore((s) => s.streak);
+  const streak = useAppStore((s) => s.streak());
   const longestStreak = useAppStore((s) => s.longestStreak);
   const totalFocusMinutes = useAppStore((s) => s.totalFocusMinutes);
 
@@ -66,12 +66,12 @@ export default function Analytics() {
         <span className="font-mono text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
           Last 28 days
         </span>
-        <div className="grid gap-1.5 mt-4" style={{ gridTemplateColumns: 'repeat(28, minmax(0, 1fr))' }}>
+        <div className="grid grid-cols-7 gap-1.5 sm:gap-2 mt-4 max-w-[420px] mx-auto sm:mx-0">
           {last28.map((d) => (
             <div
               key={d}
               title={new Date(d).toLocaleDateString()}
-              className="aspect-square rounded-[4px]"
+              className="aspect-square rounded-[4px] min-w-[18px]"
               style={{
                 background: activeDays.has(d) ? 'var(--violet)' : 'var(--line)',
                 opacity: activeDays.has(d) ? 1 : 0.5,

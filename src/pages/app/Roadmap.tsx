@@ -23,6 +23,11 @@ export default function Roadmap() {
       <div>
         <h1 className="font-display font-semibold text-2xl" style={{ color: 'var(--text)' }}>Roadmap</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>{activeGoal.title}</p>
+        {activeGoal.completed && (
+          <p className="text-[12px] mt-1.5 inline-flex items-center gap-1.5 pill px-2.5 py-1" style={{ color: 'var(--gold)' }}>
+            <Check size={12} /> Every milestone complete
+          </p>
+        )}
       </div>
 
       <div className="relative pl-7">

@@ -8,7 +8,7 @@ import NotificationsMenu from './NotificationsMenu';
 
 export default function Topbar({ onOpenPalette }: { onOpenPalette: () => void }) {
   const navigate = useNavigate();
-  const streak = useAppStore((s) => s.streak);
+  const streak = useAppStore((s) => s.streak());
   const signOut = useAppStore((s) => s.signOut);
   const userName = useAppStore((s) => s.userName);
   const { theme, toggleTheme } = useStore();
@@ -27,7 +27,7 @@ export default function Topbar({ onOpenPalette }: { onOpenPalette: () => void })
         style={{ background: 'var(--glass)', border: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}
       >
         <Command size={13} /> Quick actions
-        <span className="pill font-mono text-[10px] px-1.5 py-0.5 ml-1">{'\u2318K'}</span>
+        <span className="hidden sm:inline-flex pill font-mono text-[10px] px-1.5 py-0.5 ml-1">{'\u2318K'}</span>
       </button>
 
       <div className="flex items-center gap-2">

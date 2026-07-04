@@ -22,7 +22,7 @@
 
   --text: #f3f2ee;
   --text-muted: #9b9ca3;
-  --text-faint: #66676e;
+  --text-faint: #83848b;
 
   --violet: #8335FD;
   --violet-dim: #6629c5;
@@ -49,7 +49,7 @@ html.light {
 
   --text: #17181c;
   --text-muted: #5b5c63;
-  --text-faint: #86878e;
+  --text-faint: #5f6067;
 
   --glass: rgba(255, 255, 255, 0.72);
   --glass-strong: rgba(255, 255, 255, 0.94);

@@ -1,54 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, Clock, Globe, Sparkles, Target, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Globe, Sparkles, Target, Zap } from 'lucide-react';
 import Background from '../../components/app/Background';
 import { FocusedScreen, GlassCard, Pill, PrimaryButton, ProgressBar } from '../../components/app/ui';
 import { useAppStore } from '../../stores/useAppStore';
-import type { Roadmap } from '../../stores/useAppStore';
+import { generateRoadmap } from '../../lib/generateRoadmap';
 
 const QUESTIONS = [
   { question: 'What does done look like: a live product, a first user, or a first dollar?', icon: Target, hint: 'Be specific \u2014 this becomes your finish line' },
-  { question: 'How much time can you give this each day, honestly?', icon: Clock, hint: 'Be realistic \u2014 consistency beats intensity' },
-  { question: 'What already exists, if anything?', icon: Globe, hint: 'A rough mockup? Code? Research? Anything helps' },
+  { question: 'How much time can you give this each day, honestly?', icon: Clock, hint: 'e.g. "30 minutes" or "1 hour" \u2014 it shapes the size of your tasks' },
+  { question: 'What already exists, if anything?', icon: Globe, hint: 'A rough mockup? Code? Research? Or nothing yet \u2014 both are fine' },
   { question: 'Any hard deadline, like a submission date?', icon: Zap, hint: 'Deadlines create focus' },
 ];
 
 const EXAMPLES = ['Launch a SaaS product', 'Build a mobile app', 'Write a book'];
-
-function buildRoadmap(): Roadmap {
-  return {
-    milestones: [
-      {
-        id: 'm1', week: 1, title: 'Validate the idea', status: 'current',
-        tasks: [
-          { id: 't1', title: 'Write the one-sentence pitch for your landing page', estimateMinutes: 25, difficulty: 'easy', done: false },
-          { id: 't2', title: 'Talk to 3 potential users about the problem', estimateMinutes: 45, difficulty: 'medium', done: false },
-          { id: 't3', title: 'Sketch the core user flow', estimateMinutes: 30, difficulty: 'easy', done: false },
-        ],
-      },
-      {
-        id: 'm2', week: 2, title: 'Build the MVP', status: 'upcoming',
-        tasks: [
-          { id: 't4', title: 'Set up the project scaffold', estimateMinutes: 30, difficulty: 'easy', done: false },
-          { id: 't5', title: 'Build the core feature end to end', estimateMinutes: 60, difficulty: 'hard', done: false },
-        ],
-      },
-      {
-        id: 'm3', week: 3, title: 'Launch to first users', status: 'upcoming',
-        tasks: [
-          { id: 't6', title: 'Write launch copy', estimateMinutes: 30, difficulty: 'easy', done: false },
-          { id: 't7', title: 'Share with your first 10 users', estimateMinutes: 45, difficulty: 'medium', done: false },
-        ],
-      },
-      {
-        id: 'm4', week: 4, title: 'Grow & iterate', status: 'upcoming',
-        tasks: [
-          { id: 't8', title: 'Review first feedback and prioritize fixes', estimateMinutes: 30, difficulty: 'medium', done: false },
-        ],
-      },
-    ],
-  };
-}
 
 export default function GoalCreation() {
   const navigate = useNavigate();
@@ -72,9 +37,19 @@ export default function GoalCreation() {
 
     setStep('loading');
     setTimeout(() => {
-      createGoal(goal, buildRoadmap());
+      createGoal(goal, generateRoadmap(goal, next));
       navigate('/app');
     }, 2200);
+  };
+
+  const handleBack = () => {
+    if (answers.length === 0) {
+      setStep('input');
+      return;
+    }
+    const previousAnswer = answers[answers.length - 1];
+    setAnswers(answers.slice(0, -1));
+    setCurrentAnswer(previousAnswer);
   };
 
   if (step === 'loading') {
@@ -86,9 +61,9 @@ export default function GoalCreation() {
           <h2 className="font-display font-semibold text-[22px] mt-6" style={{ color: 'var(--text)' }}>Building your roadmap</h2>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>{goal} &rarr; turning into a plan&hellip;</p>
           <div className="flex flex-col gap-1.5 mt-5 font-mono text-[11px]" style={{ color: 'var(--text-faint)' }}>
-            <span>Analyzing your goal</span>
-            <span>Planning milestones</span>
-            <span>Picking today&rsquo;s task</span>
+            <span>Reading your goal and answers</span>
+            <span>Matching a roadmap template</span>
+            <span>Sizing tasks to your time budget</span>
           </div>
         </GlassCard>
       </FocusedScreen>
@@ -103,8 +78,13 @@ export default function GoalCreation() {
       <FocusedScreen maxWidth={520}>
         <Background />
         <GlassCard>
-          <ProgressBar value={(index / QUESTIONS.length) * 100} />
-          <p className="font-mono text-[11px] mt-3 mb-6" style={{ color: 'var(--text-muted)' }}>Question {index + 1} of {QUESTIONS.length}</p>
+          <div className="flex items-center gap-3 mb-3">
+            <button onClick={handleBack} aria-label="Back" className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--glass)', border: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+              <ArrowLeft size={15} />
+            </button>
+            <ProgressBar value={(index / QUESTIONS.length) * 100} />
+          </div>
+          <p className="font-mono text-[11px] mb-6" style={{ color: 'var(--text-muted)' }}>Question {index + 1} of {QUESTIONS.length}</p>
 
           <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ background: 'rgba(131,53,253,0.14)' }}>
             <Icon size={22} color="var(--violet)" />
@@ -147,7 +127,7 @@ export default function GoalCreation() {
       <Background />
       <GlassCard>
         <div className="text-center mb-7">
-          <Pill tone="accent" className="mb-4"><Sparkles size={12} /> AI-powered planning</Pill>
+          <Pill tone="accent" className="mb-4"><Sparkles size={12} /> Guided planning</Pill>
           <h1 className="font-display font-semibold text-[26px] sm:text-[30px] tracking-tight" style={{ color: 'var(--text)' }}>What do you want to achieve?</h1>
           <p className="text-sm mt-1.5" style={{ color: 'var(--text-muted)' }}>One goal. Shift builds the rest.</p>
         </div>
