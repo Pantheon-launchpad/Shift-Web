@@ -31,6 +31,17 @@ export interface Goal {
   completed: boolean;
   completedAt: number | null;
   roadmap: Roadmap;
+  /** The AI Planner conversation tied to this specific goal \u2014 persists so you can pick up the chat where you left off. */
+  plannerLog: PlannerMessage[];
+}
+
+export interface PlannerMessage {
+  id: string;
+  from: 'ai' | 'user';
+  text: string;
+  date: number;
+  /** Present when this message offered a "mark as done" action the user can click. */
+  actionTaskId?: string;
 }
 
 export interface ActivityEntry {
@@ -116,6 +127,27 @@ function advanceGoal(goal: Goal): { goal: Goal; advanced: boolean } {
   return { goal: { ...goal, roadmap: { milestones }, completed, completedAt }, advanced };
 }
 
+/** Shared by completeDebrief (timed focus sessions) and logProgressFromChat (AI Planner chat) so both advance the roadmap and streak identically. */
+function computeProgressUpdate(
+  state: { goals: Goal[]; streakCount: number; lastCompletionDay: number | null; longestStreak: number },
+  goalId: string | null
+) {
+  const goals = goalId ? state.goals.map((g) => (g.id === goalId ? advanceGoal(g).goal : g)) : state.goals;
+
+  const today = startOfDay(Date.now());
+  let streakCount = state.streakCount;
+  if (state.lastCompletionDay == null) {
+    streakCount = 1;
+  } else {
+    const gapDays = Math.round((today - state.lastCompletionDay) / DAY_MS);
+    if (gapDays === 0) streakCount = state.streakCount; // already logged today
+    else if (gapDays === 1) streakCount = state.streakCount + 1; // consecutive day
+    else streakCount = 1; // streak was broken, this restarts it
+  }
+
+  return { goals, streakCount, lastCompletionDay: today, longestStreak: Math.max(state.longestStreak, streakCount) };
+}
+
 interface AppState {
   // ---- Auth (mocked, frontend-only) ----
   isAuthenticated: boolean;
@@ -129,9 +161,12 @@ interface AppState {
   goals: Goal[];
   activeGoalId: string | null;
   activeGoal: () => Goal | null;
-  createGoal: (title: string, roadmap: Roadmap) => void;
+  createGoal: (title: string, roadmap: Roadmap, plannerLog?: PlannerMessage[]) => string;
   setActiveGoal: (id: string) => void;
   archiveGoal: (id: string) => void;
+  appendPlannerMessage: (goalId: string, message: Omit<PlannerMessage, 'id' | 'date'>) => void;
+  /** Marks the active goal's current task done from a chat message rather than a timed focus session. Reuses the same roadmap/streak advancement as completeDebrief. */
+  logProgressFromChat: (goalId: string, entry: Omit<ActivityEntry, 'id' | 'date' | 'focusMinutes'>) => void;
 
   todayTaskId: () => string | null;
   currentMilestone: () => Milestone | null;
@@ -174,6 +209,12 @@ interface AppState {
   toggleEmailReminders: () => void;
   connections: Connections;
   toggleConnection: (key: keyof Connections) => void;
+  backgroundGlow: boolean;
+  toggleBackgroundGlow: () => void;
+
+  // ---- Layout ----
+  sidebarCollapsed: boolean;
+  toggleSidebarCollapsed: () => void;
 
   // ---- Floating AI assistant (shared between desktop trigger + mobile nav) ----
   isAssistantOpen: boolean;
@@ -204,6 +245,8 @@ const initialTransient = {
   aiSuggestions: true,
   emailReminders: true,
   connections: { github: false, figma: false } as Connections,
+  backgroundGlow: true,
+  sidebarCollapsed: false,
 };
 
 export const useAppStore = create<AppState>()(
@@ -220,13 +263,17 @@ export const useAppStore = create<AppState>()(
       deleteAllData: () => set({ ...initialTransient }),
 
       activeGoal: () => get().goals.find((g) => g.id === get().activeGoalId) ?? null,
-      createGoal: (title, roadmap) => {
+      createGoal: (title, roadmap, plannerLog = []) => {
         const id = `goal_${Date.now()}`;
         set((state) => ({
-          goals: [...state.goals, { id, title, createdAt: Date.now(), archived: false, completed: false, completedAt: null, roadmap }],
+          goals: [
+            ...state.goals,
+            { id, title, createdAt: Date.now(), archived: false, completed: false, completedAt: null, roadmap, plannerLog },
+          ],
           activeGoalId: id,
           sessionFlow: 'idle',
         }));
+        return id;
       },
       setActiveGoal: (id) => set({ activeGoalId: id }),
       archiveGoal: (id) =>
@@ -234,6 +281,12 @@ export const useAppStore = create<AppState>()(
           goals: state.goals.map((g) => (g.id === id ? { ...g, archived: true } : g)),
           activeGoalId:
             state.activeGoalId === id ? (state.goals.find((g) => g.id !== id && !g.archived)?.id ?? null) : state.activeGoalId,
+        })),
+      appendPlannerMessage: (goalId, message) =>
+        set((state) => ({
+          goals: state.goals.map((g) =>
+            g.id === goalId ? { ...g, plannerLog: [...g.plannerLog, { ...message, id: `pm_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, date: Date.now() }] } : g
+          ),
         })),
 
       todayTaskId: () => {
@@ -266,32 +319,21 @@ export const useAppStore = create<AppState>()(
         const full: ActivityEntry = { ...entry, id: `act_${Date.now()}`, date: Date.now() };
         const goal = get().activeGoal();
 
-        set((state) => {
-          const goals = goal
-            ? state.goals.map((g) => (g.id === goal.id ? advanceGoal(g).goal : g))
-            : state.goals;
+        set((state) => ({
+          ...computeProgressUpdate(state, goal?.id ?? null),
+          lastDebrief: full,
+          activityLog: [full, ...state.activityLog],
+          sessionFlow: 'share' as const,
+        }));
+      },
 
-          const today = startOfDay(Date.now());
-          let streakCount = state.streakCount;
-          if (state.lastCompletionDay == null) {
-            streakCount = 1;
-          } else {
-            const gapDays = Math.round((today - state.lastCompletionDay) / DAY_MS);
-            if (gapDays === 0) streakCount = state.streakCount; // already logged today
-            else if (gapDays === 1) streakCount = state.streakCount + 1; // consecutive day
-            else streakCount = 1; // streak was broken, this restarts it
-          }
-
-          return {
-            goals,
-            lastDebrief: full,
-            activityLog: [full, ...state.activityLog],
-            sessionFlow: 'share' as const,
-            streakCount,
-            lastCompletionDay: today,
-            longestStreak: Math.max(state.longestStreak, streakCount),
-          };
-        });
+      logProgressFromChat: (goalId, entry) => {
+        const full: ActivityEntry = { ...entry, id: `act_${Date.now()}`, date: Date.now(), focusMinutes: 0 };
+        set((state) => ({
+          ...computeProgressUpdate(state, goalId),
+          lastDebrief: full,
+          activityLog: [full, ...state.activityLog],
+        }));
       },
 
       publishPost: (post) => {
@@ -325,6 +367,9 @@ export const useAppStore = create<AppState>()(
       toggleAiSuggestions: () => set((state) => ({ aiSuggestions: !state.aiSuggestions })),
       toggleEmailReminders: () => set((state) => ({ emailReminders: !state.emailReminders })),
       toggleConnection: (key) => set((state) => ({ connections: { ...state.connections, [key]: !state.connections[key] } })),
+      toggleBackgroundGlow: () => set((state) => ({ backgroundGlow: !state.backgroundGlow })),
+
+      toggleSidebarCollapsed: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
 
       toggleAssistant: () => set((state) => ({ isAssistantOpen: !state.isAssistantOpen })),
       closeAssistant: () => set({ isAssistantOpen: false }),

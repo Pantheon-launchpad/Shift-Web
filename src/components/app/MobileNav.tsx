@@ -28,7 +28,7 @@ export default function MobileNav() {
       {/* Raised center button: shared AI assistant, same state as the desktop bubble */}
       <motion.button
         onClick={toggleAssistant}
-        aria-label="AI assistant"
+        aria-label="Quick chat with AI"
         aria-pressed={isAssistantOpen}
         whileTap={{ scale: 0.92 }}
         animate={{ y: isAssistantOpen ? 0 : -6, rotate: isAssistantOpen ? 90 : 0 }}

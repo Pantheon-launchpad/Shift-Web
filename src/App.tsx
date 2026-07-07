@@ -10,6 +10,7 @@ import Activity from './pages/app/Activity';
 import BuildInPublic from './pages/app/BuildInPublic';
 import Analytics from './pages/app/Analytics';
 import Settings from './pages/app/Settings';
+import AIPlanner from './pages/app/AIPlanner';
 import GoalCreation from './pages/app/GoalCreation';
 import FocusSession from './components/app/FocusSession';
 import Debrief from './pages/app/Debrief';
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="activity" element={<Activity />} />
           <Route path="build-in-public" element={<BuildInPublic />} />
           <Route path="analytics" element={<Analytics />} />
+          <Route path="planner" element={<AIPlanner />} />
           <Route path="settings" element={<Settings />} />
         </Route>
 

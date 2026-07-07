@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Download, Github, Moon, Sun, Trash2 } from 'lucide-react';
+import { AlertTriangle, Download, Github, Moon, Sparkles, Sun, Trash2 } from 'lucide-react';
 import { GlassCard, PrimaryButton } from '../../components/app/ui';
 import { useAppStore } from '../../stores/useAppStore';
 import { useStore } from '../../stores/useStore';
@@ -38,6 +38,8 @@ export default function Settings() {
   const deleteAllData = useAppStore((s) => s.deleteAllData);
   const connections = useAppStore((s) => s.connections);
   const toggleConnection = useAppStore((s) => s.toggleConnection);
+  const backgroundGlow = useAppStore((s) => s.backgroundGlow);
+  const toggleBackgroundGlow = useAppStore((s) => s.toggleBackgroundGlow);
   const { theme, toggleTheme } = useStore();
 
   const [name, setName] = useState(userName);
@@ -89,12 +91,24 @@ export default function Settings() {
 
       <section>
         <SectionTitle>Appearance</SectionTitle>
-        <GlassCard className="flex items-center justify-between p-5">
-          <div className="flex items-center gap-2.5">
-            {theme === 'dark' ? <Moon size={16} color="var(--text-muted)" /> : <Sun size={16} color="var(--text-muted)" />}
-            <span className="text-sm" style={{ color: 'var(--text)' }}>{theme === 'dark' ? 'Dark mode' : 'Light mode'}</span>
+        <GlassCard className="flex flex-col divide-y p-0" style={{ borderColor: 'var(--line)' }}>
+          <div className="flex items-center justify-between p-5">
+            <div className="flex items-center gap-2.5">
+              {theme === 'dark' ? <Moon size={16} color="var(--text-muted)" /> : <Sun size={16} color="var(--text-muted)" />}
+              <span className="text-sm" style={{ color: 'var(--text)' }}>{theme === 'dark' ? 'Dark mode' : 'Light mode'}</span>
+            </div>
+            <Toggle checked={theme === 'dark'} onChange={toggleTheme} />
           </div>
-          <Toggle checked={theme === 'dark'} onChange={toggleTheme} />
+          <div className="flex items-center justify-between p-5">
+            <div className="flex items-center gap-2.5">
+              <Sparkles size={16} color="var(--text-muted)" />
+              <div>
+                <span className="text-sm block" style={{ color: 'var(--text)' }}>Glowing background</span>
+                <span className="text-[12px]" style={{ color: 'var(--text-muted)' }}>Toggle off for a flatter look &mdash; compare which you prefer</span>
+              </div>
+            </div>
+            <Toggle checked={backgroundGlow} onChange={toggleBackgroundGlow} />
+          </div>
         </GlassCard>
       </section>
 

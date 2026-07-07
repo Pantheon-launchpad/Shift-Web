@@ -20,7 +20,10 @@ export default function Topbar({ onOpenPalette }: { onOpenPalette: () => void })
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 px-5 sm:px-8 py-4 flex-wrap" style={{ borderBottom: '1px solid var(--line)' }}>
+    <div
+      className="glass sticky top-0 z-20 flex items-center justify-between gap-3 px-5 sm:px-8 py-4 flex-wrap"
+      style={{ border: 'none', borderBottom: '1px solid var(--line)', borderRadius: 0 }}
+    >
       <button
         onClick={onOpenPalette}
         className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] transition-colors"

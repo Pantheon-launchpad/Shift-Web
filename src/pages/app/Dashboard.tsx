@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowUpRight,
+  Bot,
   CheckCircle2,
   Clock,
   Layers,
@@ -35,24 +36,26 @@ function EmptyState() {
           What should we build toward?
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-          Tell Shift your goal and it turns into a roadmap, a streak, and one clear task for today.
+          Talk it through with the AI Planner and it turns into a roadmap, a streak, and one clear task for today.
         </p>
-        <PrimaryButton
-          onClick={() => {
-            startGoalCreation();
-            navigate('/app/goals/new');
-          }}
-          className="mt-7 mx-auto"
-        >
-          Create your first goal <ArrowUpRight size={16} />
-        </PrimaryButton>
+        <div className="flex flex-col items-center gap-3 mt-7">
+          <PrimaryButton onClick={() => navigate('/app/planner')}>
+            <Bot size={16} /> Plan with AI
+          </PrimaryButton>
+          <button
+            onClick={() => { startGoalCreation(); navigate('/app/goals/new'); }}
+            className="text-[13px] underline-offset-2 hover:underline"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            Or use the quick 4-question setup
+          </button>
+        </div>
       </FadeUp>
     </div>
   );
 }
 
 function GoalCompleteState({ title }: { title: string }) {
-  const startGoalCreation = useAppStore((s) => s.startGoalCreation);
   const navigate = useNavigate();
   return (
     <div className="flex-1 flex items-center justify-center px-5 py-20">
@@ -73,8 +76,8 @@ function GoalCompleteState({ title }: { title: string }) {
           Every milestone on this roadmap is done. That&rsquo;s the whole goal, shipped.
         </p>
         <div className="flex gap-3 justify-center mt-7 flex-wrap">
-          <PrimaryButton onClick={() => { startGoalCreation(); navigate('/app/goals/new'); }}>
-            Start a new goal <ArrowUpRight size={16} />
+          <PrimaryButton onClick={() => navigate('/app/planner')}>
+            <Bot size={16} /> Plan your next goal with AI
           </PrimaryButton>
           <button onClick={() => navigate('/app/roadmap')} className="btn btn-ghost">
             <Map size={15} /> View roadmap
@@ -261,6 +264,26 @@ export default function Dashboard() {
           </GlassCard>
         </div>
       </div>
+      </FadeUp>
+
+      {/* AI Planner entry point \u2014 primary way to plan in depth, especially on mobile where the floating assistant is only for quick chat */}
+      <FadeUp delay={0.2}>
+        <button
+          onClick={() => navigate('/app/planner')}
+          className="w-full flex items-center gap-4 rounded-2xl p-4 sm:p-5 text-left transition-transform hover:scale-[1.01]"
+          style={{ background: 'linear-gradient(120deg, rgba(131,53,253,0.16), rgba(131,53,253,0.05))', border: '1px solid var(--glass-border)' }}
+        >
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(131,53,253,0.2)' }}>
+            <Bot size={20} color="var(--violet)" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>Chat with your AI Planner</p>
+            <p className="text-[12.5px] mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
+              Talk through your roadmap, check progress, or tell it when a task is done
+            </p>
+          </div>
+          <ArrowUpRight size={18} color="var(--text-muted)" className="shrink-0" />
+        </button>
       </FadeUp>
 
       {/* Quick actions */}

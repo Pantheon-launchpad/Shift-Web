@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Sparkles, X } from 'lucide-react';
+import { Bot, Sparkles, X } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore';
 
 const QUICK_PROMPTS = ['Explain today\u2019s task', 'Break this into smaller steps', 'Why this milestone?'];
+const PLAN_NEW_GOAL_PROMPT = 'Help me plan a new goal';
 
 interface Message {
   from: 'ai' | 'user';
@@ -66,11 +68,13 @@ function getReply(
  * desktop, and the raised center button in the mobile floating nav.
  */
 export default function AIAssistant() {
+  const navigate = useNavigate();
   const activeGoal = useAppStore((s) => s.activeGoal());
   const currentMilestone = useAppStore((s) => s.currentMilestone());
   const todayTaskId = useAppStore((s) => s.todayTaskId());
   const isOpen = useAppStore((s) => s.isAssistantOpen);
   const toggleAssistant = useAppStore((s) => s.toggleAssistant);
+  const closeAssistant = useAppStore((s) => s.closeAssistant);
 
   const taskTitle = currentMilestone?.tasks.find((t) => t.id === todayTaskId)?.title ?? null;
 
@@ -78,6 +82,11 @@ export default function AIAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     { from: 'ai', text: activeGoal ? `I\u2019m here to help with "${activeGoal.title}". Ask me anything.` : 'Create a goal and I\u2019ll help you break it down.' },
   ]);
+
+  const openFullPlanner = () => {
+    closeAssistant();
+    navigate('/app/planner');
+  };
 
   const send = (text: string) => {
     if (!text.trim()) return;
@@ -94,7 +103,7 @@ export default function AIAssistant() {
       {/* Desktop trigger only \u2014 mobile uses the center button in MobileNav */}
       <motion.button
         onClick={toggleAssistant}
-        aria-label="AI assistant"
+        aria-label="Quick chat with AI"
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         className="hidden md:flex fixed z-40 items-center justify-center rounded-full"
@@ -136,9 +145,14 @@ export default function AIAssistant() {
               boxShadow: 'var(--shadow-lift)',
             }}
           >
-            <div className="flex items-center gap-2 px-4 py-3.5" style={{ borderBottom: '1px solid var(--line)' }}>
-              <Sparkles size={15} color="var(--violet)" />
-              <span className="text-[13px] font-semibold" style={{ color: 'var(--text)' }}>Shift Assistant</span>
+            <div className="flex items-center justify-between gap-2 px-4 py-3.5" style={{ borderBottom: '1px solid var(--line)' }}>
+              <div className="flex items-center gap-2">
+                <Sparkles size={15} color="var(--violet)" />
+                <span className="text-[13px] font-semibold" style={{ color: 'var(--text)' }}>Quick chat</span>
+              </div>
+              <button onClick={openFullPlanner} className="flex items-center gap-1 text-[11px] font-medium" style={{ color: 'var(--violet)' }}>
+                <Bot size={12} /> Open AI Planner
+              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-3.5 flex flex-col gap-3">
@@ -161,6 +175,15 @@ export default function AIAssistant() {
             </div>
 
             <div className="px-3 pb-3 flex flex-wrap gap-1.5">
+              <motion.button
+                onClick={openFullPlanner}
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.96 }}
+                className="pill px-2.5 py-1 text-[11px] flex items-center gap-1"
+                style={{ color: 'var(--violet)', borderColor: 'var(--violet)' }}
+              >
+                <Bot size={11} /> {PLAN_NEW_GOAL_PROMPT}
+              </motion.button>
               {QUICK_PROMPTS.map((p) => (
                 <motion.button
                   key={p}

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Archive, ArrowUpRight, CheckCircle2, Map, Plus } from 'lucide-react';
+import { Archive, ArrowUpRight, Bot, CheckCircle2, Map, Plus } from 'lucide-react';
 import { GlassCard, PrimaryButton } from '../../components/app/ui';
 import { useAppStore } from '../../stores/useAppStore';
 
@@ -21,9 +21,18 @@ export default function Goals() {
           <h1 className="font-display font-semibold text-2xl" style={{ color: 'var(--text)' }}>Goals</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Manage your long-term goals and their roadmaps.</p>
         </div>
-        <PrimaryButton onClick={() => { startGoalCreation(); navigate('/app/goals/new'); }}>
-          <Plus size={16} /> New goal
-        </PrimaryButton>
+        <div className="flex flex-col items-end gap-1.5">
+          <PrimaryButton onClick={() => navigate('/app/planner')}>
+            <Bot size={16} /> Plan with AI
+          </PrimaryButton>
+          <button
+            onClick={() => { startGoalCreation(); navigate('/app/goals/new'); }}
+            className="text-[12px] underline-offset-2 hover:underline flex items-center gap-1"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <Plus size={12} /> Quick 4-question setup
+          </button>
+        </div>
       </div>
 
       {activeGoals.length === 0 ? (

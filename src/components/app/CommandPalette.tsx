@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   Activity,
   BarChart3,
+  Bot,
   Calendar,
   Flame,
   Map,
@@ -44,14 +45,22 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
       { id: 'dashboard', label: 'Go to Dashboard', icon: Calendar, run: () => go('/app') },
       { id: 'goals', label: 'Go to Goals', icon: Flame, run: () => go('/app/goals') },
       { id: 'roadmap', label: 'Go to Roadmap', icon: Map, run: () => go('/app/roadmap') },
+      { id: 'planner', label: 'Go to AI Planner', icon: Bot, run: () => go('/app/planner') },
       { id: 'activity', label: 'Go to Activity', icon: Activity, run: () => go('/app/activity') },
       { id: 'bip', label: 'Go to Build in Public', icon: Share2, run: () => go('/app/build-in-public') },
       { id: 'analytics', label: 'Go to Analytics', icon: BarChart3, run: () => go('/app/analytics') },
       { id: 'settings', label: 'Go to Settings', icon: Settings, run: () => go('/app/settings') },
       {
+        id: 'plan-with-ai',
+        label: 'Plan a new goal with AI',
+        hint: 'Conversational planner \u2014 builds a full roadmap',
+        icon: Bot,
+        run: () => go('/app/planner'),
+      },
+      {
         id: 'new-goal',
-        label: 'Create new goal',
-        hint: 'Launches the AI goal interview',
+        label: 'Quick 4-question setup',
+        hint: 'Faster, less detailed than the AI Planner',
         icon: Flame,
         run: () => {
           startGoalCreation();
