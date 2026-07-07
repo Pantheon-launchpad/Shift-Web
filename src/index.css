@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 /* ============================================================
-   SHIFT — Design tokens
+   SHIFT - Design tokens
    Dark charcoal by default, warm off-white text, one cool
    accent (violet) for action, one warm accent (gold) reserved
-   only for "proof" moments — the point where messy work turns
+   only for "proof" moments - the point where messy work turns
    into something worth showing.
    ============================================================ */
 
 :root {
-  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   --ink: #0a0b0d;
   --ink-1: #101216;
@@ -24,7 +24,7 @@
   --text-muted: #9b9ca3;
   --text-faint: #83848b;
 
-  --violet: #8335FD;
+  --violet: #8335fd;
   --violet-dim: #6629c5;
   --gold: #f2b84b;
   --gold-dim: #d99c2f;
@@ -33,8 +33,10 @@
   --glass-strong: rgba(255, 255, 255, 0.08);
   --glass-border: rgba(255, 255, 255, 0.1);
 
-  --shadow-soft: 0 1px 1px rgba(0,0,0,0.2), 0 8px 24px -8px rgba(0,0,0,0.5);
-  --shadow-lift: 0 1px 1px rgba(0,0,0,0.25), 0 24px 48px -16px rgba(0,0,0,0.65);
+  --shadow-soft:
+    0 1px 1px rgba(0, 0, 0, 0.2), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  --shadow-lift:
+    0 1px 1px rgba(0, 0, 0, 0.25), 0 24px 48px -16px rgba(0, 0, 0, 0.65);
 
   color-scheme: dark;
 }
@@ -53,34 +55,45 @@ html.light {
 
   --glass: rgba(255, 255, 255, 0.72);
   --glass-strong: rgba(255, 255, 255, 0.94);
-  --glass-border: rgba(15, 15, 20, 0.10);
+  --glass-border: rgba(15, 15, 20, 0.1);
 
-  --shadow-soft: 0 1px 2px rgba(15,15,20,0.05), 0 10px 24px -10px rgba(15,15,20,0.16);
-  --shadow-lift: 0 1px 2px rgba(15,15,20,0.06), 0 28px 52px -16px rgba(15,15,20,0.20);
+  --shadow-soft:
+    0 1px 2px rgba(15, 15, 20, 0.05), 0 10px 24px -10px rgba(15, 15, 20, 0.16);
+  --shadow-lift:
+    0 1px 2px rgba(15, 15, 20, 0.06), 0 28px 52px -16px rgba(15, 15, 20, 0.2);
 
   color-scheme: light;
 }
 
 @theme {
   --color-ink: var(--ink);
-  --color-violet: #8335FD;
+  --color-violet: #8335fd;
   --color-gold: #f2b84b;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+}
 
 body {
   background: var(--ink);
   color: var(--text);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.4s ease, color 0.4s ease;
+  transition:
+    background-color 0.4s ease,
+    color 0.4s ease;
   overflow-x: hidden;
 }
 
-::selection { background: var(--violet); color: white; }
+::selection {
+  background: var(--violet);
+  color: white;
+}
 
 /* Focus visibility kept intentionally, restyled to match theme */
 :focus-visible {
@@ -89,13 +102,20 @@ body {
   border-radius: 4px;
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--font-display);
   letter-spacing: -0.02em;
 }
 
-.font-display { font-family: var(--font-display); }
-.font-mono { font-family: var(--font-mono); }
+.font-display {
+  font-family: var(--font-display);
+}
+.font-mono {
+  font-family: var(--font-mono);
+}
 
 /* ---------------- Background system ---------------- */
 
@@ -110,22 +130,28 @@ h1, h2, h3, h4 {
 
 .shift-canvas::before {
   /* grid */
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-image:
     linear-gradient(var(--line) 1px, transparent 1px),
     linear-gradient(90deg, var(--line) 1px, transparent 1px);
   background-size: 64px 64px;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 70%);
+  mask-image: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    black 0%,
+    transparent 70%
+  );
   opacity: 0.5;
 }
 
-html.light .shift-canvas::before { opacity: 0.35; }
+html.light .shift-canvas::before {
+  opacity: 0.35;
+}
 
 .shift-canvas::after {
   /* grain */
-  content: '';
+  content: "";
   position: absolute;
   inset: -200px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
@@ -139,7 +165,9 @@ html.light .shift-canvas::before { opacity: 0.35; }
   filter: blur(90px);
   opacity: 0.35;
 }
-html.light .orb { opacity: 0.28; }
+html.light .orb {
+  opacity: 0.28;
+}
 
 /* ---------------- Glass surfaces ---------------- */
 
@@ -178,7 +206,9 @@ html.light .glass-strong {
     0 16px 32px -14px rgba(15, 15, 20, 0.16);
 }
 
-.perspective { perspective: 1200px; }
+.perspective {
+  perspective: 1200px;
+}
 
 .card {
   background: var(--ink-2);
@@ -188,7 +218,9 @@ html.light .glass-strong {
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
     inset 0 -1px 0 rgba(0, 0, 0, 0.3),
     var(--shadow-soft);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .card:hover {
@@ -207,20 +239,30 @@ html.light .glass-strong {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.25s ease,
+    background-color 0.25s ease,
+    border-color 0.25s ease;
   white-space: nowrap;
 }
 
 .btn-primary {
   background: linear-gradient(180deg, #9653fd, var(--violet));
   color: white;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset, 0 8px 20px -6px rgba(131, 53, 253, 0.55);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 8px 20px -6px rgba(131, 53, 253, 0.55);
 }
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset, 0 12px 28px -6px rgba(131, 53, 253, 0.7);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.3) inset,
+    0 12px 28px -6px rgba(131, 53, 253, 0.7);
 }
-.btn-primary:active { transform: translateY(0px) scale(0.98); }
+.btn-primary:active {
+  transform: translateY(0px) scale(0.98);
+}
 
 .btn-ghost {
   background: var(--glass);
@@ -247,7 +289,7 @@ html.light .glass-strong {
 }
 
 .eyebrow::before {
-  content: '';
+  content: "";
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -261,18 +303,35 @@ html.light .glass-strong {
   background: var(--glass);
 }
 
-.text-muted { color: var(--text-muted); }
-.text-faint { color: var(--text-faint); }
-.border-line { border-color: var(--line); }
+.text-muted {
+  color: var(--text-muted);
+}
+.text-faint {
+  color: var(--text-faint);
+}
+.border-line {
+  border-color: var(--line);
+}
 
-.gold-text { color: var(--gold); }
+.gold-text {
+  color: var(--gold);
+}
 
-::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;

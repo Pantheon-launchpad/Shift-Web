@@ -1,5 +1,5 @@
-import { useRef } from 'react';
-import type { ReactNode } from 'react';
+import { useRef } from "react";
+import type { ReactNode } from "react";
 import {
   motion,
   useMotionValue,
@@ -7,9 +7,9 @@ import {
   useTransform,
   useMotionTemplate,
   type HTMLMotionProps,
-} from 'framer-motion';
+} from "framer-motion";
 
-interface TiltCardProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
+interface TiltCardProps extends Omit<HTMLMotionProps<"div">, "children"> {
   children?: ReactNode;
   maxTilt?: number;
   glare?: boolean;
@@ -18,7 +18,7 @@ interface TiltCardProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
 
 /**
  * Wraps any glass/card surface with a mouse-tracked 3D tilt, a moving
- * specular highlight, and a slight lift toward the viewer on hover —
+ * specular highlight, and a slight lift toward the viewer on hover -
  * the bit that turns flat glassmorphism into something with thickness.
  */
 export default function TiltCard({
@@ -34,8 +34,14 @@ export default function TiltCard({
   const px = useMotionValue(0.5);
   const py = useMotionValue(0.5);
 
-  const rotateX = useSpring(useTransform(py, [0, 1], [maxTilt, -maxTilt]), { stiffness: 260, damping: 24 });
-  const rotateY = useSpring(useTransform(px, [0, 1], [-maxTilt, maxTilt]), { stiffness: 260, damping: 24 });
+  const rotateX = useSpring(useTransform(py, [0, 1], [maxTilt, -maxTilt]), {
+    stiffness: 260,
+    damping: 24,
+  });
+  const rotateY = useSpring(useTransform(px, [0, 1], [-maxTilt, maxTilt]), {
+    stiffness: 260,
+    damping: 24,
+  });
   const z = useSpring(0, { stiffness: 260, damping: 24 });
 
   const glareX = useTransform(px, (v) => `${v * 100}%`);
@@ -69,20 +75,24 @@ export default function TiltCard({
         rotateY,
         translateZ: z,
         transformPerspective: 900,
-        transformStyle: 'preserve-3d',
-        position: 'relative',
+        transformStyle: "preserve-3d",
+        position: "relative",
         boxShadow: lift ? dynamicShadow : undefined,
         ...style,
       }}
       className={className}
       {...rest}
     >
-      <div style={{ transform: 'translateZ(24px)', transformStyle: 'preserve-3d' }}>{children}</div>
+      <div
+        style={{ transform: "translateZ(24px)", transformStyle: "preserve-3d" }}
+      >
+        {children}
+      </div>
       {glare && (
         <motion.div
           aria-hidden
           className="pointer-events-none absolute inset-0 rounded-[inherit]"
-          style={{ background: glareBg, mixBlendMode: 'overlay' }}
+          style={{ background: glareBg, mixBlendMode: "overlay" }}
         />
       )}
     </motion.div>
