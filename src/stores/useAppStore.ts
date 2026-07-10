@@ -1,5 +1,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import type { Understanding } from "../lib/understanding";
+import type { Journey } from "../lib/journey";
+import { logout as apiLogout } from "../lib/api";
 
 export type MilestoneStatus = "done" | "current" | "upcoming";
 
@@ -31,8 +34,12 @@ export interface Goal {
   completed: boolean;
   completedAt: number | null;
   roadmap: Roadmap;
-  /** The AI Planner conversation tied to this specific goal \u2014 persists so you can pick up the chat where you left off. */
+  /** The Plan conversation tied to this specific goal \u2014 persists so you can pick up the thinking where you left off. */
   plannerLog: PlannerMessage[];
+  /** What Plan understood about this goal at creation time (and after any clarification edits). Powers the persistent Understanding panel and the Journey's node content. */
+  understanding: Understanding | null;
+  /** The generated Journey graph \u2014 structural content only; live progress is always read from `roadmap` at render time, never duplicated here. */
+  journey: Journey | null;
 }
 
 export interface PlannerMessage {
@@ -187,9 +194,15 @@ interface AppState {
     title: string,
     roadmap: Roadmap,
     plannerLog?: PlannerMessage[],
+    understanding?: Understanding | null,
+    journey?: Journey | null,
   ) => string;
   setActiveGoal: (id: string) => void;
   archiveGoal: (id: string) => void;
+  /** Permanently removes a goal and everything tied to it (roadmap, planner log, journey). Unlike archiveGoal, this can't be undone. */
+  deleteGoal: (id: string) => void;
+  /** Persists edits made directly on the Journey canvas (node moves, edits, AI expansions, accepted proposals). */
+  updateGoalJourney: (goalId: string, journey: Journey) => void;
   appendPlannerMessage: (
     goalId: string,
     message: Omit<PlannerMessage, "id" | "date">,
@@ -311,18 +324,25 @@ export const useAppStore = create<AppState>()(
       updateUserName: (name) => set({ userName: name }),
       // Signing out ends the session but keeps this device's goals/history -
       // signing back in should feel like coming back, not starting over.
-      signOut: () =>
+      signOut: () => {
+        void apiLogout().catch(() => {});
         set({
           isAuthenticated: false,
           sessionFlow: "idle",
           isAssistantOpen: false,
-        }),
+        });
+      },
       // Genuinely destructive: wipes everything and resets to a clean slate.
-      deleteAllData: () => set({ ...initialTransient }),
+      // Also ends the backend session \u2014 there's no point deleting local
+      // data while a valid refresh token for this device is still live.
+      deleteAllData: () => {
+        void apiLogout().catch(() => {});
+        set({ ...initialTransient });
+      },
 
       activeGoal: () =>
         get().goals.find((g) => g.id === get().activeGoalId) ?? null,
-      createGoal: (title, roadmap, plannerLog = []) => {
+      createGoal: (title, roadmap, plannerLog = [], understanding = null, journey = null) => {
         const id = `goal_${Date.now()}`;
         set((state) => ({
           goals: [
@@ -336,6 +356,8 @@ export const useAppStore = create<AppState>()(
               completedAt: null,
               roadmap,
               plannerLog,
+              understanding,
+              journey,
             },
           ],
           activeGoalId: id,
@@ -354,6 +376,21 @@ export const useAppStore = create<AppState>()(
               ? (state.goals.find((g) => g.id !== id && !g.archived)?.id ??
                 null)
               : state.activeGoalId,
+        })),
+      deleteGoal: (id) =>
+        set((state) => {
+          const goals = state.goals.filter((g) => g.id !== id);
+          return {
+            goals,
+            activeGoalId:
+              state.activeGoalId === id
+                ? (goals.find((g) => !g.archived)?.id ?? null)
+                : state.activeGoalId,
+          };
+        }),
+      updateGoalJourney: (goalId, journey) =>
+        set((state) => ({
+          goals: state.goals.map((g) => (g.id === goalId ? { ...g, journey } : g)),
         })),
       appendPlannerMessage: (goalId, message) =>
         set((state) => ({
@@ -506,6 +543,26 @@ export const useAppStore = create<AppState>()(
     {
       name: "shift-store",
       storage: createJSONStorage(() => localStorage),
+      // v2: the Journey graph was rewritten from a fixed radial chart
+      // (`kind`, `angle`) to a real node-editor model (`type`, `x`/`y`).
+      // Old persisted journeys don't have a `type` field at all, which
+      // crashes the node renderer's icon lookup. Rather than trying to
+      // translate the old shape 1:1, we drop old journeys back to `null` \u2014
+      // the rest of each goal (roadmap, streak, planner log) is untouched,
+      // and the Plan page already renders a clean "no Journey yet" state
+      // for a goal with `journey: null`.
+      version: 2,
+      migrate: (persisted, fromVersion) => {
+        const state = persisted as { goals?: Array<Record<string, unknown>> };
+        if (fromVersion < 2 && Array.isArray(state.goals)) {
+          state.goals = state.goals.map((g) => {
+            const journey = g.journey as { nodes?: Array<Record<string, unknown>> } | null | undefined;
+            const looksLegacy = !!journey?.nodes?.length && journey.nodes[0].type === undefined;
+            return looksLegacy ? { ...g, journey: null } : g;
+          });
+        }
+        return state;
+      },
       // Don't persist things that should always start fresh on load -
       // an in-progress focus/debrief/share flow or an open panel shouldn't
       // survive a refresh in a half-finished state.

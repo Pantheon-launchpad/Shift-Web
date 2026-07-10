@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Github, Loader2, Mail } from 'lucide-react';
 import Background from '../components/app/Background';
 import { useAppStore } from '../stores/useAppStore';
+import { signup, login, startOAuth, ApiError } from '../lib/api';
 
 const LOOP_STEPS = [
   'Goal',
@@ -65,15 +66,32 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = () => {
-    if (!email.trim() || !password.trim()) return;
+  const handleSubmit = async () => {
+    setError(null);
+    if (!email.trim() || !password.trim() || (mode === 'signup' && !name.trim())) {
+      setError(
+        mode === 'signup' && !name.trim()
+          ? 'What should we call you?'
+          : !email.trim()
+            ? 'An email gets you back in tomorrow.'
+            : 'Add a password to continue.',
+      );
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
-      signIn(name.trim() || email.split('@')[0]);
-      setLoading(false);
+    try {
+      const { user } = mode === 'signup'
+        ? await signup(email.trim(), password, name.trim())
+        : await login(email.trim(), password);
+      signIn(user.name || user.email.split('@')[0]);
       navigate('/app');
-    }, 900);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -157,6 +175,15 @@ export default function Login() {
               <Field label="Email" type="email" value={email} onChange={setEmail} placeholder="you@domain.com" autoFocus={mode === 'signin'} />
               <Field label="Password" type="password" value={password} onChange={setPassword} placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" />
 
+              {error && (
+                <div
+                  className="text-[13px] rounded-lg px-3 py-2"
+                  style={{ color: 'var(--violet)', background: 'var(--accent-soft, rgba(124,58,237,0.1))', border: '1px solid var(--line)' }}
+                >
+                  {error}
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={loading}
@@ -181,8 +208,8 @@ export default function Login() {
             </div>
 
             <div className="flex gap-2.5">
-              <SSOButton icon={<Github size={15} />} label="GitHub" onClick={handleSubmit} />
-              <SSOButton icon={<Mail size={15} />} label="Google" onClick={handleSubmit} />
+              <SSOButton icon={<Github size={15} />} label="GitHub" onClick={() => startOAuth('github')} />
+              <SSOButton icon={<Mail size={15} />} label="Google" onClick={() => startOAuth('google')} />
             </div>
 
             <p className="mt-6 text-[12px] text-center leading-relaxed" style={{ color: 'var(--text-muted)' }}>

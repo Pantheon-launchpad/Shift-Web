@@ -22,8 +22,8 @@ export default function Goals() {
           <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Manage your long-term goals and their roadmaps.</p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          <PrimaryButton onClick={() => navigate('/app/planner')}>
-            <Bot size={16} /> Plan with AI
+          <PrimaryButton onClick={() => navigate('/app/plan')}>
+            <Bot size={16} /> Plan
           </PrimaryButton>
           <button
             onClick={() => { startGoalCreation(); navigate('/app/goals/new'); }}

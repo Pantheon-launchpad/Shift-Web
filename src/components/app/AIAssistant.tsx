@@ -85,7 +85,7 @@ export default function AIAssistant() {
 
   const openFullPlanner = () => {
     closeAssistant();
-    navigate('/app/planner');
+    navigate('/app/plan');
   };
 
   const send = (text: string) => {
@@ -151,7 +151,7 @@ export default function AIAssistant() {
                 <span className="text-[13px] font-semibold" style={{ color: 'var(--text)' }}>Quick chat</span>
               </div>
               <button onClick={openFullPlanner} className="flex items-center gap-1 text-[11px] font-medium" style={{ color: 'var(--violet)' }}>
-                <Bot size={12} /> Open AI Planner
+                <Bot size={12} /> Open Plan
               </button>
             </div>
 
