@@ -149,7 +149,10 @@ const CATEGORIES: Record<string, CategoryTemplate> = {
   },
 };
 
+export type CategoryKey = keyof typeof CATEGORIES;
+
 const DEFAULT_CATEGORY: CategoryTemplate = CATEGORIES.software;
+const DEFAULT_CATEGORY_KEY: CategoryKey = 'software';
 
 function detectCategory(goalTitle: string): CategoryTemplate {
   const lower = goalTitle.toLowerCase();
@@ -159,8 +162,23 @@ function detectCategory(goalTitle: string): CategoryTemplate {
   return DEFAULT_CATEGORY;
 }
 
+/**
+ * Same classification as detectCategory, but returns the key rather than
+ * the template \u2014 used by the Journey/Understanding engines so every part
+ * of the app that needs "what kind of goal is this" agrees with the
+ * roadmap generator instead of running a second, potentially-diverging
+ * classifier.
+ */
+export function detectCategoryKey(text: string): CategoryKey {
+  const lower = text.toLowerCase();
+  for (const key of Object.keys(CATEGORIES) as CategoryKey[]) {
+    if (CATEGORIES[key].keywords.some((kw) => lower.includes(kw))) return key;
+  }
+  return DEFAULT_CATEGORY_KEY;
+}
+
 /** Parses a free-text "how much time per day" answer into a per-task minute budget. */
-function parseDailyMinutes(answer: string): number | null {
+export function parseDailyMinutes(answer: string): number | null {
   const lower = answer.toLowerCase();
   const hourMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)/);
   if (hourMatch) return Math.round(parseFloat(hourMatch[1]) * 60);

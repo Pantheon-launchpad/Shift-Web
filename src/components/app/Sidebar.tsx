@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { to: '/app', label: 'Dashboard', icon: Calendar, end: true },
   { to: '/app/goals', label: 'Goals', icon: Flame },
   { to: '/app/roadmap', label: 'Roadmap', icon: Map },
-  { to: '/app/planner', label: 'AI Planner', icon: Bot },
+  { to: '/app/plan', label: 'Plan', icon: Bot },
   { to: '/app/activity', label: 'Activity', icon: Activity },
   { to: '/app/build-in-public', label: 'Build in Public', icon: Share2 },
   { to: '/app/analytics', label: 'Analytics', icon: BarChart3 },

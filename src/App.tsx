@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
+import OAuthCallback from './pages/OAuthCallback';
 import ProtectedRoute from './components/app/ProtectedRoute';
 import AppLayout from './pages/app/AppLayout';
 import Dashboard from './pages/app/Dashboard';
@@ -10,7 +11,7 @@ import Activity from './pages/app/Activity';
 import BuildInPublic from './pages/app/BuildInPublic';
 import Analytics from './pages/app/Analytics';
 import Settings from './pages/app/Settings';
-import AIPlanner from './pages/app/AIPlanner';
+import Plan from './pages/app/Plan';
 import GoalCreation from './pages/app/GoalCreation';
 import FocusSession from './components/app/FocusSession';
 import Debrief from './pages/app/Debrief';
@@ -29,6 +30,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<LoginRoute />} />
+        <Route path="/oauth-callback" element={<OAuthCallback />} />
 
         {/* Persistent multi-page workspace: sidebar + topbar chrome */}
         <Route
@@ -45,7 +47,8 @@ export default function App() {
           <Route path="activity" element={<Activity />} />
           <Route path="build-in-public" element={<BuildInPublic />} />
           <Route path="analytics" element={<Analytics />} />
-          <Route path="planner" element={<AIPlanner />} />
+          <Route path="plan" element={<Plan />} />
+          <Route path="planner" element={<Navigate to="/app/plan" replace />} />
           <Route path="settings" element={<Settings />} />
         </Route>
 

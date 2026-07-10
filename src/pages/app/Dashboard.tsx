@@ -36,11 +36,11 @@ function EmptyState() {
           What should we build toward?
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-          Talk it through with the AI Planner and it turns into a roadmap, a streak, and one clear task for today.
+          Talk it through with Plan and it turns into a living Journey — a roadmap, a streak, and one clear task for today.
         </p>
         <div className="flex flex-col items-center gap-3 mt-7">
-          <PrimaryButton onClick={() => navigate('/app/planner')}>
-            <Bot size={16} /> Plan with AI
+          <PrimaryButton onClick={() => navigate('/app/plan')}>
+            <Bot size={16} /> Plan
           </PrimaryButton>
           <button
             onClick={() => { startGoalCreation(); navigate('/app/goals/new'); }}
@@ -76,8 +76,8 @@ function GoalCompleteState({ title }: { title: string }) {
           Every milestone on this roadmap is done. That&rsquo;s the whole goal, shipped.
         </p>
         <div className="flex gap-3 justify-center mt-7 flex-wrap">
-          <PrimaryButton onClick={() => navigate('/app/planner')}>
-            <Bot size={16} /> Plan your next goal with AI
+          <PrimaryButton onClick={() => navigate('/app/plan')}>
+            <Bot size={16} /> Plan your next goal
           </PrimaryButton>
           <button onClick={() => navigate('/app/roadmap')} className="btn btn-ghost">
             <Map size={15} /> View roadmap
@@ -266,10 +266,10 @@ export default function Dashboard() {
       </div>
       </FadeUp>
 
-      {/* AI Planner entry point \u2014 primary way to plan in depth, especially on mobile where the floating assistant is only for quick chat */}
+      {/* Plan entry point \u2014 primary way to plan in depth, especially on mobile where the floating assistant is only for quick chat */}
       <FadeUp delay={0.2}>
         <button
-          onClick={() => navigate('/app/planner')}
+          onClick={() => navigate('/app/plan')}
           className="w-full flex items-center gap-4 rounded-2xl p-4 sm:p-5 text-left transition-transform hover:scale-[1.01]"
           style={{ background: 'linear-gradient(120deg, rgba(131,53,253,0.16), rgba(131,53,253,0.05))', border: '1px solid var(--glass-border)' }}
         >
@@ -277,7 +277,7 @@ export default function Dashboard() {
             <Bot size={20} color="var(--violet)" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>Chat with your AI Planner</p>
+            <p className="text-sm font-medium" style={{ color: 'var(--text)' }}>Chat with Plan</p>
             <p className="text-[12.5px] mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
               Talk through your roadmap, check progress, or tell it when a task is done
             </p>

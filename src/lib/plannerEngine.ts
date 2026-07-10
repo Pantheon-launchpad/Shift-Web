@@ -1,58 +1,12 @@
 import type { Goal, Milestone, Task } from '../stores/useAppStore';
 import { getUpcomingTasks } from '../stores/useAppStore';
 
-/**
- * The AI Planner's intake is a fixed sequence of questions, same as the
- * quick-setup wizard's, but delivered conversationally: each prompt
- * references what was just said instead of appearing as a bare form field.
- * It's still a scripted, deterministic flow (no live model call) \u2014 the
- * personalization comes from templating each line with the previous answer.
- */
-export interface IntakeStep {
-  key: 'goal' | 'doneLooksLike' | 'timePerDay' | 'existingWork' | 'deadline';
-  prompt: (ctx: { goal: string; answers: string[] }) => string;
-}
-
-export const INTAKE_STEPS: IntakeStep[] = [
-  {
-    key: 'goal',
-    prompt: () => 'Hey! I\u2019m the AI Planner \u2014 tell me what you\u2019re trying to achieve, and I\u2019ll help you turn it into a real roadmap. What\u2019s the goal?',
-  },
-  {
-    key: 'doneLooksLike',
-    prompt: ({ goal }) => `Got it \u2014 "${goal}". Let\u2019s make this concrete: what does *done* actually look like? A live product, a first user, a finished draft \u2014 be specific.`,
-  },
-  {
-    key: 'timePerDay',
-    prompt: () => 'Good. How much time can you realistically give this each day? Even "20 minutes" is useful \u2014 it changes how I size your tasks.',
-  },
-  {
-    key: 'existingWork',
-    prompt: () => 'Is there anything already in progress \u2014 a draft, a prototype, some research \u2014 or are we starting from zero?',
-  },
-  {
-    key: 'deadline',
-    prompt: () => 'Last one: any hard deadline I should plan around? If not, just say "no deadline."',
-  },
-];
-
-export function intakeAck(stepKey: IntakeStep['key'], answer: string): string {
-  switch (stepKey) {
-    case 'doneLooksLike':
-      return `Noted \u2014 "${answer}" is the finish line.`;
-    case 'timePerDay':
-      return `${answer} a day, got it. I\u2019ll size tasks to fit that.`;
-    case 'existingWork':
-      return /nothing|none|scratch|no\b/i.test(answer) ? 'Starting fresh \u2014 that\u2019s completely fine.' : 'Good, I\u2019ll build on what you\u2019ve already got.';
-    case 'deadline':
-      return /no deadline|none|no\b/i.test(answer) ? 'No hard deadline \u2014 we\u2019ll pace it sensibly.' : `Noted \u2014 aiming for ${answer}.`;
-    default:
-      return '';
-  }
-}
-
 // ---------------------------------------------------------------------------
-// Post-creation chat: answering questions about an existing goal/roadmap.
+// Ongoing thinking-log chat: answering questions about an existing goal's
+// Journey once it's been generated (see Plan.tsx / ThinkingLog.tsx). The
+// initial intake conversation that creates a goal lives in
+// understanding.ts + Plan.tsx's ComposeFlow instead \u2014 this file only
+// covers the "continue thinking" conversation after a Journey exists.
 // ---------------------------------------------------------------------------
 
 export interface PlannerContext {
@@ -84,7 +38,7 @@ export function plannerReply(message: string, ctx: PlannerContext): PlannerReply
 
   if (DONE_PATTERNS.test(message) && todayTask) {
     return {
-      text: `Nice work. Want me to mark "${todayTask.title}" as done and move your roadmap forward?`,
+      text: `Nice work. Want me to mark "${todayTask.title}" as done and move your Journey forward?`,
       offerCompleteTaskId: todayTask.id,
     };
   }
@@ -114,7 +68,7 @@ export function plannerReply(message: string, ctx: PlannerContext): PlannerReply
   }
 
   if (WHY_PATTERNS.test(message) && currentMilestone) {
-    return { text: `"${currentMilestone.title}" comes next because it's the gap between where "${goal.title}" is now and the next real checkpoint on the roadmap.` };
+    return { text: `"${currentMilestone.title}" comes next because it's the gap between where "${goal.title}" is now and the next real checkpoint on the Journey.` };
   }
 
   if (EXPLAIN_PATTERNS.test(message) && todayTask) {
