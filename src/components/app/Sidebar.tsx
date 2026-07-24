@@ -1,18 +1,13 @@
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Activity, BarChart3, Bot, Calendar, ChevronLeft, Flame, Map, Settings, Share2 } from 'lucide-react';
+import { Bot, ChevronLeft, Flame, ListChecks, Share2 } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore';
 import logo from '../../assets/logo.svg';
 
 const NAV_ITEMS = [
-  { to: '/app', label: 'Dashboard', icon: Calendar, end: true },
-  { to: '/app/goals', label: 'Goals', icon: Flame },
-  { to: '/app/roadmap', label: 'Roadmap', icon: Map },
+  { to: '/app', label: 'Tasks', icon: ListChecks, end: true },
   { to: '/app/plan', label: 'Plan', icon: Bot },
-  { to: '/app/activity', label: 'Activity', icon: Activity },
   { to: '/app/build-in-public', label: 'Build in Public', icon: Share2 },
-  { to: '/app/analytics', label: 'Analytics', icon: BarChart3 },
-  { to: '/app/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function Sidebar() {

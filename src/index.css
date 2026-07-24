@@ -29,6 +29,24 @@
   --gold: #f2b84b;
   --gold-dim: #d99c2f;
 
+  /* Secondary accents \u2014 used strategically for status/priority/analytics,
+     never as a replacement for the violet/gold identity. */
+  --info: #5b9dff;
+  --info-dim: #3d7ae0;
+  --success: #4ade80;
+  --success-dim: #22b360;
+  --warning: #f5a524;
+  --warning-dim: #d68a10;
+  --danger: #f87171;
+  --danger-dim: #e6524f;
+
+  --gradient-violet: linear-gradient(135deg, #9653fd 0%, #6629c5 100%);
+  --gradient-gold: linear-gradient(135deg, #f7cb70 0%, #d99c2f 100%);
+  --gradient-info: linear-gradient(135deg, #7db4ff 0%, #3d7ae0 100%);
+  --gradient-mesh: radial-gradient(at 20% 0%, rgba(131, 53, 253, 0.16) 0px, transparent 50%),
+    radial-gradient(at 90% 10%, rgba(242, 184, 75, 0.08) 0px, transparent 45%),
+    radial-gradient(at 90% 90%, rgba(91, 157, 255, 0.07) 0px, transparent 45%);
+
   --glass: rgba(255, 255, 255, 0.045);
   --glass-strong: rgba(255, 255, 255, 0.08);
   --glass-border: rgba(255, 255, 255, 0.1);
@@ -315,6 +333,43 @@ html.light .glass-strong {
 
 .gold-text {
   color: var(--gold);
+}
+
+/* ---------------- Tinted surfaces \u2014 subtle gradient card backgrounds so
+   sections read as distinct without breaking from the glass system ---------------- */
+
+.surface-violet {
+  background: linear-gradient(160deg, rgba(131, 53, 253, 0.13), rgba(131, 53, 253, 0.02));
+  border: 1px solid rgba(131, 53, 253, 0.2);
+}
+.surface-gold {
+  background: linear-gradient(160deg, rgba(242, 184, 75, 0.13), rgba(242, 184, 75, 0.02));
+  border: 1px solid rgba(242, 184, 75, 0.2);
+}
+.surface-info {
+  background: linear-gradient(160deg, rgba(91, 157, 255, 0.12), rgba(91, 157, 255, 0.02));
+  border: 1px solid rgba(91, 157, 255, 0.18);
+}
+.surface-success {
+  background: linear-gradient(160deg, rgba(74, 222, 128, 0.12), rgba(74, 222, 128, 0.02));
+  border: 1px solid rgba(74, 222, 128, 0.18);
+}
+
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Card lift on hover \u2014 shared micro-interaction for interactive cards */
+.card-hover {
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
 }
 
 ::-webkit-scrollbar {

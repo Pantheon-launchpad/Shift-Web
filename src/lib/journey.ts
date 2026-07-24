@@ -472,3 +472,113 @@ export function interpretCommand(journey: Journey, message: string, selectedNode
 
   return null;
 }
+
+
+// ---------------------------------------------------------------------------
+// Roadmap sync — keeps the canvas structurally current when the AI
+// review pass (useAppStore's reviewRoadmapForGoal) adds, splits, or merges
+// roadmap tasks/milestones. This is deliberately ADDITIVE ONLY: it never
+// moves, deletes, or re-runs layout on an existing node, so a user's own
+// arrangement of the canvas is never disturbed by a background review that
+// can fire after every task completion. It only creates nodes for roadmap
+// items that don't have one yet, and positions them near whatever they
+// connect to. If the user wants a full re-layout afterward, that's what
+// the canvas's existing "Auto Arrange" (autoLayout) action is for.
+//
+// Live status/progress for nodes that already exist is handled elsewhere
+// (JourneyCanvas derives it from the roadmap every render via
+// milestoneId/taskId) — this function only closes the "no node exists
+// at all yet" gap.
+// ---------------------------------------------------------------------------
+
+export interface SyncResult {
+  journey: Journey;
+  addedNodeIds: string[];
+}
+
+export function syncJourneyWithRoadmap(journey: Journey, roadmap: Roadmap): SyncResult {
+  const existingMilestoneIds = new Set(
+    journey.nodes.filter((n) => n.type === 'milestone' && n.milestoneId).map((n) => n.milestoneId!),
+  );
+  const existingTaskIds = new Set(
+    journey.nodes.filter((n) => n.type === 'task' && n.taskId).map((n) => n.taskId!),
+  );
+
+  const newNodes: JourneyNode[] = [];
+  const newEdges: JourneyEdge[] = [];
+  const addedNodeIds: string[] = [];
+  const findNode = (id: string) => journey.nodes.find((n) => n.id === id) ?? newNodes.find((n) => n.id === id);
+
+  // Pass 1: any roadmap milestone with no node yet gets one, chained after
+  // whichever milestone (old or newly-created) currently ends the visible
+  // chain — walked in roadmap order so a genuinely new milestone lands
+  // after the last one the canvas already knows about.
+  let chainAnchorId: string | null = null;
+  let newMilestoneCount = 0;
+  roadmap.milestones.forEach((m) => {
+    const msNodeId = `sub-${m.id}`;
+    if (existingMilestoneIds.has(m.id)) {
+      chainAnchorId = msNodeId;
+      return;
+    }
+    const anchor = chainAnchorId ? findNode(chainAnchorId) : findNode('vision');
+    const node = baseNode({
+      id: msNodeId,
+      type: 'milestone',
+      label: m.title,
+      description: `${m.tasks.length} task${m.tasks.length === 1 ? '' : 's'}`,
+      status: m.status === 'done' ? 'done' : m.status === 'current' ? 'in-progress' : 'todo',
+      milestoneId: m.id,
+      x: anchor ? anchor.x + NODE_WIDTH + 90 : newMilestoneCount * (NODE_WIDTH + 90),
+      y: anchor ? anchor.y : newMilestoneCount * (NODE_HEIGHT + 60),
+    });
+    newNodes.push(node);
+    addedNodeIds.push(msNodeId);
+    newEdges.push({
+      id: makeId('e'),
+      source: anchor ? anchor.id : 'vision',
+      target: msNodeId,
+      relation: anchor && anchor.id !== 'vision' ? 'depends-on' : 'builds-on',
+    });
+    chainAnchorId = msNodeId;
+    newMilestoneCount += 1;
+  });
+
+  // Pass 2: any roadmap task with no node yet gets one, fanned out beside
+  // its milestone (existing or just-created above).
+  roadmap.milestones.forEach((m) => {
+    const msNodeId = `sub-${m.id}`;
+    const msNode = findNode(msNodeId);
+    const siblingCountSoFar = journey.nodes.filter((n) => n.type === 'task' && n.milestoneId === m.id).length;
+    let addedForThisMilestone = 0;
+
+    m.tasks.forEach((t) => {
+      if (existingTaskIds.has(t.id)) return;
+      const taskNodeId = `task-${t.id}`;
+      const siblingIndex = siblingCountSoFar + addedForThisMilestone;
+      const node = baseNode({
+        id: taskNodeId,
+        type: 'task',
+        label: t.title,
+        description: `${t.estimateMinutes} min · ${t.difficulty}`,
+        status: t.done ? 'done' : 'todo',
+        taskId: t.id,
+        milestoneId: m.id,
+        parentId: msNodeId,
+        x: msNode ? msNode.x + NODE_WIDTH + 90 : addedForThisMilestone * (NODE_WIDTH + 90),
+        y: msNode ? msNode.y + siblingIndex * (NODE_HEIGHT + 24) : siblingIndex * (NODE_HEIGHT + 24),
+      });
+      newNodes.push(node);
+      addedNodeIds.push(taskNodeId);
+      newEdges.push({ id: makeId('e'), source: msNodeId, target: taskNodeId, relation: 'requires' });
+      addedForThisMilestone += 1;
+    });
+  });
+
+  if (newNodes.length === 0) return { journey, addedNodeIds: [] };
+
+  return {
+    journey: { ...journey, nodes: [...journey.nodes, ...newNodes], edges: [...journey.edges, ...newEdges] },
+    addedNodeIds,
+  };
+}

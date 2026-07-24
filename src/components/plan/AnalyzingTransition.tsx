@@ -61,6 +61,13 @@ export default function AnalyzingTransition({ onDone }: { onDone: () => void }) 
           })}
         </AnimatePresence>
       </div>
+      <button
+        onClick={onDone}
+        className="mt-8 text-[12px] underline-offset-2 hover:underline"
+        style={{ color: 'var(--text-faint)' }}
+      >
+        Skip
+      </button>
     </div>
   );
 }

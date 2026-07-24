@@ -1,29 +1,32 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bot, ChevronDown, Map, Maximize2, Minimize2 } from 'lucide-react';
+import { Bot, ChevronDown, Map, MessageCircleMore, Maximize2, Minimize2 } from 'lucide-react';
 import { GlassCard, Pill } from '../../components/app/ui';
 import { useAppStore } from '../../stores/useAppStore';
-import type { PlannerMessage } from '../../stores/useAppStore';
-import { generateRoadmap } from '../../lib/generateRoadmap';
-import { extractUnderstanding, applyClarification, getClarificationQuestions, CLARIFICATION_BANK } from '../../lib/understanding';
+import type { PlannerMessage, Roadmap } from '../../stores/useAppStore';
+import { generateRoadmap, stampRoadmapIds } from '../../lib/generateRoadmap';
+import { extractUnderstanding, applyClarification, mergeCollectedFields } from '../../lib/understanding';
 import type { Understanding, ClarificationQuestion } from '../../lib/understanding';
 import { generateJourney } from '../../lib/journey';
 import type { Journey } from '../../lib/journey';
 import { plannerReply } from '../../lib/plannerEngine';
+import { generateSuggestedTasks, generatePlanReply, refreshRisks, generateAiRoadmap } from '../../lib/aiApi';
 import { goalProgress, findTask, type Attachment } from '../../components/plan/shared';
 import ThinkingComposer from '../../components/plan/ThinkingComposer';
 import { LiveUnderstandingPanel, PersistentUnderstandingPanel } from '../../components/plan/UnderstandingPanel';
 import AnalyzingTransition from '../../components/plan/AnalyzingTransition';
 import UnderstandingReview from '../../components/plan/UnderstandingReview';
-import ClarificationFlow from '../../components/plan/ClarificationFlow';
+import PlanStepper from '../../components/plan/PlanStepper';
 import JourneyCanvas from '../../components/plan/JourneyCanvas';
 import JourneyAccordion from '../../components/plan/JourneyAccordion';
 import ThinkingLog from '../../components/plan/ThinkingLog';
 import PlanSwitcher from '../../components/plan/PlanSwitcher';
 
-type ComposePhase = 'compose' | 'analyzing' | 'review' | 'clarify' | 'generating';
+type ComposePhase = 'compose' | 'analyzing' | 'review' | 'generating';
 
 export default function Plan() {
+  const navigate = useNavigate();
   const allGoals = useAppStore((s) => s.goals);
   const goals = useMemo(() => allGoals.filter((g) => !g.archived), [allGoals]);
   const activeGoalId = useAppStore((s) => s.activeGoalId);
@@ -33,6 +36,9 @@ export default function Plan() {
   const updateGoalJourney = useAppStore((s) => s.updateGoalJourney);
   const appendPlannerMessage = useAppStore((s) => s.appendPlannerMessage);
   const logProgressFromChat = useAppStore((s) => s.logProgressFromChat);
+  const addDailyTasks = useAppStore((s) => s.addDailyTasks);
+  const planChatDraft = useAppStore((s) => s.planChatDraft);
+  const clearPlanChatDraft = useAppStore((s) => s.clearPlanChatDraft);
   const streak = useAppStore((s) => s.streak());
 
   const [viewGoalId, setViewGoalId] = useState<string | null>(activeGoalId ?? goals[0]?.id ?? null);
@@ -45,13 +51,29 @@ export default function Plan() {
 
   const [reviewUnderstanding, setReviewUnderstanding] = useState<Understanding | null>(null);
   const understandingRef = useRef<Understanding | null>(null);
-  const [clarificationQueue, setClarificationQueue] = useState<ClarificationQuestion[]>([]);
-  const [editingField, setEditingField] = useState<ClarificationQuestion['key'] | null>(null);
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [isReplying, setIsReplying] = useState(false);
   const [mobileJourneyOpen, setMobileJourneyOpen] = useState(false);
   const [isJourneyExpanded, setIsJourneyExpanded] = useState(false);
+
+  // Picks up whatever the "Talk it through instead" chat page collected and
+  // drops straight into Review with it pre-filled, skipping compose/analyzing.
+  useEffect(() => {
+    if (!planChatDraft) return;
+    const base = extractUnderstanding(planChatDraft.text);
+    const merged = mergeCollectedFields(base, planChatDraft.collected);
+    understandingRef.current = merged;
+    setText(planChatDraft.text);
+    setReviewUnderstanding(merged);
+    setIsComposing(true);
+    setPhase('review');
+    clearPlanChatDraft();
+    refreshRisksFor(merged);
+    // Runs once per draft handoff, not on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planChatDraft]);
+
 
   useEffect(() => {
     if (!isJourneyExpanded) return;
@@ -63,6 +85,31 @@ export default function Plan() {
   }, [isJourneyExpanded]);
 
   const viewGoal = goals.find((g) => g.id === viewGoalId) ?? null;
+
+  const riskRefreshToken = useRef(0);
+
+  /** Re-asks Gemma for risks using everything currently known, instead of leaving the flat category-default list from the very first pass. Silently no-ops on failure. */
+  function refreshRisksFor(u: Understanding) {
+    const token = ++riskRefreshToken.current;
+    refreshRisks({
+      goalTitle: u.goal.value || text.slice(0, 140) || 'New goal',
+      category: u.categoryLabel,
+      timeline: u.timeline.value,
+      experience: u.experience.value,
+      resources: u.resources.value,
+      audience: u.audience.value,
+      timePerDayMinutes: u.timePerDayMinutes,
+      constraints: u.constraints,
+    })
+      .then((risks) => {
+        if (risks.length === 0) return;
+        if (riskRefreshToken.current !== token) return; // a newer edit superseded this request
+        updateUnderstanding((prev) => ({ ...prev, risks }));
+      })
+      .catch(() => {
+        // No backend / no key / offline \u2014 keep whatever risks are already showing.
+      });
+  }
 
   function updateUnderstanding(updater: (u: Understanding) => Understanding) {
     setReviewUnderstanding((u) => {
@@ -80,8 +127,6 @@ export default function Plan() {
     setAttachments([]);
     setReviewUnderstanding(null);
     understandingRef.current = null;
-    setClarificationQueue([]);
-    setEditingField(null);
     setViewGoalId(null);
     setSelectedNodeId(null);
   }
@@ -118,38 +163,57 @@ export default function Plan() {
     understandingRef.current = snapshot;
     setReviewUnderstanding(snapshot);
     setPhase('review');
+    refreshRisksFor(snapshot);
+  }
+
+  function handleBackToCompose() {
+    setPhase('compose');
   }
 
   function handleReviewContinue() {
-    const u = understandingRef.current!;
-    const missing = getClarificationQuestions(u);
-    if (missing.length === 0) {
-      generateGoal(u);
-    } else {
-      setClarificationQueue(missing);
-      setPhase('clarify');
-    }
-  }
-
-  function handleClarificationAnswer(key: ClarificationQuestion['key'], answer: string) {
-    updateUnderstanding((u) => applyClarification(u, key, answer));
-  }
-
-  function handleClarificationDone() {
     generateGoal(understandingRef.current!);
   }
 
-  function handleReviewEditAnswer(key: ClarificationQuestion['key'], answer: string) {
-    updateUnderstanding((u) => applyClarification(u, key, answer));
-    setEditingField(null);
+  function handleReviewFieldSave(key: ClarificationQuestion['key'], answer: string) {
+    updateUnderstanding((u) => {
+      const next = applyClarification(u, key, answer);
+      refreshRisksFor(next);
+      return next;
+    });
   }
 
   function generateGoal(u: Understanding) {
     setPhase('generating');
-    setTimeout(() => {
+    (async () => {
       const goalTitle = u.goal.value || text.slice(0, 140) || 'New goal';
-      const roadmapAnswers = ['', u.timePerDayMinutes ? `${u.timePerDayMinutes} minutes` : '', text, u.timeline.value ?? ''];
-      const roadmap = generateRoadmap(goalTitle, roadmapAnswers);
+      const startedAt = Date.now();
+
+      let roadmap: Roadmap;
+      try {
+        const raw = await generateAiRoadmap({
+          goalTitle,
+          rawText: text,
+          motivation: u.motivation.value,
+          audience: u.audience.value,
+          timeline: u.timeline.value,
+          experience: u.experience.value,
+          resources: u.resources.value,
+          timePerDayMinutes: u.timePerDayMinutes,
+          constraints: u.constraints,
+        });
+        roadmap = stampRoadmapIds(raw);
+      } catch {
+        // Offline, no key configured, or a bad response \u2014 fall back to the
+        // deterministic template so goal creation never hard-fails.
+        const roadmapAnswers = ['', u.timePerDayMinutes ? `${u.timePerDayMinutes} minutes` : '', text, u.timeline.value ?? ''];
+        roadmap = generateRoadmap(goalTitle, roadmapAnswers);
+      }
+
+      // Keep the "generating" phase visible for at least a beat even when
+      // the AI call resolves fast, so it doesn't flash instantly.
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < 700) await new Promise((r) => setTimeout(r, 700 - elapsed));
+
       const journey = generateJourney(goalTitle, u, roadmap);
       const now = Date.now();
       const transcript: PlannerMessage[] = [
@@ -166,7 +230,23 @@ export default function Plan() {
       setPhase('compose');
       setViewGoalId(newId);
       setActiveGoal(newId);
-    }, 900);
+
+      // Best-effort: ask Gemma for a few quick supporting to-dos for the Tasks
+      // page. Non-blocking and silent on failure (no key configured, offline,
+      // etc.) so it never holds up or breaks the plan-creation flow.
+      generateSuggestedTasks({
+        goalTitle,
+        milestoneTitle: roadmap.milestones[0]?.title,
+        todayTaskTitle: roadmap.milestones[0]?.tasks[0]?.title,
+        count: 3,
+      })
+        .then((tasks) => {
+          if (tasks.length) addDailyTasks(tasks, 'ai');
+        })
+        .catch(() => {
+          // No backend / no API key / request failed \u2014 the user can still add tasks manually.
+        });
+    })();
   }
 
   function handleSend(value: string) {
@@ -174,13 +254,28 @@ export default function Plan() {
     appendPlannerMessage(viewGoal.id, { from: 'user', text: value });
     setActiveGoal(viewGoal.id);
     setIsReplying(true);
-    setTimeout(() => {
-      const currentMilestone = viewGoal.roadmap.milestones.find((m) => m.status === 'current') ?? null;
-      const todayTask = currentMilestone?.tasks.find((t) => !t.done) ?? null;
-      const reply = plannerReply(value, { goal: viewGoal, currentMilestone, todayTask, streak });
-      appendPlannerMessage(viewGoal.id, { from: 'ai', text: reply.text, actionTaskId: reply.offerCompleteTaskId });
-      setIsReplying(false);
-    }, 650);
+
+    const currentMilestone = viewGoal.roadmap.milestones.find((m) => m.status === 'current') ?? null;
+    const todayTask = currentMilestone?.tasks.find((t) => !t.done) ?? null;
+    // Local pattern-matcher stays authoritative for detecting "mark as done"
+    // actions (cheap and reliable) and as the offline/no-API-key fallback.
+    const localReply = plannerReply(value, { goal: viewGoal, currentMilestone, todayTask, streak });
+
+    generatePlanReply({
+      message: value,
+      goalTitle: viewGoal.title,
+      milestoneTitle: currentMilestone?.title,
+      todayTaskTitle: todayTask?.title,
+      streak,
+      progressPct: Math.round(goalProgress(viewGoal) * 100),
+    })
+      .then((text) => {
+        appendPlannerMessage(viewGoal.id, { from: 'ai', text, actionTaskId: localReply.offerCompleteTaskId });
+      })
+      .catch(() => {
+        appendPlannerMessage(viewGoal.id, { from: 'ai', text: localReply.text, actionTaskId: localReply.offerCompleteTaskId });
+      })
+      .finally(() => setIsReplying(false));
   }
 
   function handleMarkDone(taskId: string) {
@@ -248,13 +343,10 @@ export default function Plan() {
                   onAnalyze={handleAnalyze}
                   onAnalyzingDone={handleAnalyzingDone}
                   reviewUnderstanding={reviewUnderstanding}
-                  editingField={editingField}
-                  setEditingField={setEditingField}
-                  onReviewEditAnswer={handleReviewEditAnswer}
+                  onBackToCompose={handleBackToCompose}
+                  onReviewFieldSave={handleReviewFieldSave}
                   onReviewContinue={handleReviewContinue}
-                  clarificationQueue={clarificationQueue}
-                  onClarificationAnswer={handleClarificationAnswer}
-                  onClarificationDone={handleClarificationDone}
+                  onTalkInstead={() => navigate('/app/plan/collect')}
                 />
               ) : viewGoal ? (
                 <ThinkingLog goal={viewGoal} onSend={handleSend} onMarkDone={handleMarkDone} isReplying={isReplying} />
@@ -329,13 +421,10 @@ export default function Plan() {
                 onAnalyze={handleAnalyze}
                 onAnalyzingDone={handleAnalyzingDone}
                 reviewUnderstanding={reviewUnderstanding}
-                editingField={editingField}
-                setEditingField={setEditingField}
-                onReviewEditAnswer={handleReviewEditAnswer}
+                onBackToCompose={handleBackToCompose}
+                onReviewFieldSave={handleReviewFieldSave}
                 onReviewContinue={handleReviewContinue}
-                clarificationQueue={clarificationQueue}
-                onClarificationAnswer={handleClarificationAnswer}
-                onClarificationDone={handleClarificationDone}
+                onTalkInstead={() => navigate('/app/plan/collect')}
               />
             </GlassCard>
             {phase === 'compose' && text.trim().length > 0 && (
@@ -397,13 +486,10 @@ function ComposeFlow({
   onAnalyze,
   onAnalyzingDone,
   reviewUnderstanding,
-  editingField,
-  setEditingField,
-  onReviewEditAnswer,
+  onBackToCompose,
+  onReviewFieldSave,
   onReviewContinue,
-  clarificationQueue,
-  onClarificationAnswer,
-  onClarificationDone,
+  onTalkInstead,
 }: {
   phase: ComposePhase;
   text: string;
@@ -413,51 +499,60 @@ function ComposeFlow({
   onAnalyze: () => void;
   onAnalyzingDone: () => void;
   reviewUnderstanding: Understanding | null;
-  editingField: ClarificationQuestion['key'] | null;
-  setEditingField: (k: ClarificationQuestion['key'] | null) => void;
-  onReviewEditAnswer: (key: ClarificationQuestion['key'], answer: string) => void;
+  onBackToCompose: () => void;
+  onReviewFieldSave: (key: ClarificationQuestion['key'], answer: string) => void;
   onReviewContinue: () => void;
-  clarificationQueue: ClarificationQuestion[];
-  onClarificationAnswer: (key: ClarificationQuestion['key'], answer: string) => void;
-  onClarificationDone: () => void;
+  onTalkInstead: () => void;
 }) {
+  const step = phase === 'review' || phase === 'generating' ? (phase === 'generating' ? 3 : 2) : 1;
+
   if (phase === 'analyzing') return <AnalyzingTransition onDone={onAnalyzingDone} />;
 
   if (phase === 'generating') {
     return (
-      <div className="flex flex-col items-center justify-center h-full py-16">
-        <div className="w-9 h-9 rounded-full mb-4" style={{ border: '2px solid var(--line)', borderTopColor: 'var(--violet)', animation: 'spin 1s linear infinite' }} />
-        <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>Building your Journey&hellip;</p>
+      <div className="flex flex-col h-full">
+        <PlanStepper step={3} />
+        <div className="flex-1 flex flex-col items-center justify-center py-16">
+          <div className="w-9 h-9 rounded-full mb-4" style={{ border: '2px solid var(--line)', borderTopColor: 'var(--violet)', animation: 'spin 1s linear infinite' }} />
+          <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>Building your Journey&hellip;</p>
+        </div>
       </div>
     );
   }
 
   if (phase === 'review' && reviewUnderstanding) {
-    if (editingField) {
-      return (
-        <ClarificationFlow
-          questions={[{ key: editingField, question: CLARIFICATION_BANK[editingField] }]}
-          onAnswer={onReviewEditAnswer}
-          onDone={() => setEditingField(null)}
+    return (
+      <div className="flex flex-col h-full">
+        <PlanStepper step={2} />
+        <UnderstandingReview
+          understanding={reviewUnderstanding}
+          onBack={onBackToCompose}
+          onFieldSave={onReviewFieldSave}
+          onContinue={onReviewContinue}
         />
-      );
-    }
-    return <UnderstandingReview understanding={reviewUnderstanding} onEdit={setEditingField} onContinue={onReviewContinue} />;
-  }
-
-  if (phase === 'clarify') {
-    return <ClarificationFlow questions={clarificationQueue} onAnswer={onClarificationAnswer} onDone={onClarificationDone} />;
+      </div>
+    );
   }
 
   return (
-    <ThinkingComposer
-      value={text}
-      onChange={setText}
-      attachments={attachments}
-      onAddAttachment={(a) => setAttachments((prev) => [...prev, a])}
-      onRemoveAttachment={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
-      onAnalyze={onAnalyze}
-      autoFocus
-    />
+    <div className="flex flex-col h-full">
+      <PlanStepper step={1} />
+      <ThinkingComposer
+        value={text}
+        onChange={setText}
+        attachments={attachments}
+        onAddAttachment={(a) => setAttachments((prev) => [...prev, a])}
+        onRemoveAttachment={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
+        onAnalyze={onAnalyze}
+        autoFocus
+      />
+      <button
+        onClick={onTalkInstead}
+        className="flex items-center justify-center gap-1.5 mt-3 text-[12px] py-2 rounded-lg"
+        style={{ color: 'var(--text-faint)' }}
+      >
+        <MessageCircleMore size={13} /> Don&rsquo;t know where to start? Talk it through instead
+      </button>
+    </div>
   );
 }

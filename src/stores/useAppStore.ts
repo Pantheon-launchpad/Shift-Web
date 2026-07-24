@@ -1,8 +1,11 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { Understanding } from "../lib/understanding";
+import type { Understanding, CollectedFields } from "../lib/understanding";
 import type { Journey } from "../lib/journey";
 import { logout as apiLogout } from "../lib/api";
+import { reviewRoadmap } from "../lib/aiApi";
+import { reconcileRoadmapReview } from "../lib/generateRoadmap";
+import { syncJourneyWithRoadmap } from "../lib/journey";
 
 export type MilestoneStatus = "done" | "current" | "upcoming";
 
@@ -12,6 +15,10 @@ export interface Task {
   estimateMinutes: number;
   difficulty: "easy" | "medium" | "hard";
   done: boolean;
+  /** Set by the AI roadmap-review pass (src/lib/generateRoadmap.ts's reconcileRoadmapReview). Optional so template-generated and pre-existing tasks remain valid without it. */
+  priority?: TaskPriority;
+  /** Ids of other tasks (anywhere in the roadmap) that this task depends on, resolved from the AI's title-based references at reconcile time. */
+  dependsOn?: string[];
 }
 
 export interface Milestone {
@@ -24,6 +31,27 @@ export interface Milestone {
 
 export interface Roadmap {
   milestones: Milestone[];
+}
+
+export type TaskPriority = "low" | "medium" | "high";
+
+/** A user-managed, ad-hoc daily task \u2014 separate from roadmap tasks, which stay owned by `roadmap` and are never duplicated here. The Dashboard merges this list with a synthetic row for today's roadmap task at render time. */
+export interface DailyTask {
+  id: string;
+  title: string;
+  done: boolean;
+  priority: TaskPriority;
+  order: number;
+  createdAt: number;
+  /** Omitted/'manual' for user-added tasks; 'ai' for ones Plan suggested when a goal was created. */
+  source?: "manual" | "ai";
+}
+
+/** What the floating Focus widget is currently timing \u2014 either a roadmap task (advances the real milestone/streak on completion) or a standalone daily task (just marks itself done). */
+export interface ActiveFocusTask {
+  id: string;
+  title: string;
+  isDailyTask: boolean;
 }
 
 export interface Goal {
@@ -67,6 +95,8 @@ export interface BuildInPublicPost {
   goalTitle: string;
   twitter: string;
   linkedin: string;
+  instagram: string;
+  medium: string;
   cardHeadline: string;
   cardSubline: string;
 }
@@ -82,6 +112,8 @@ export interface AppNotification {
 export interface Connections {
   github: boolean;
   figma: boolean;
+  slack: boolean;
+  trello: boolean;
 }
 
 /** The ephemeral, distraction-free sequence layered above normal navigation. */
@@ -226,14 +258,44 @@ interface AppState {
   lastDebrief: ActivityEntry | null;
 
   startGoalCreation: () => void;
-  startFocusSession: () => void;
-  endFocusSession: (minutes: number) => void;
+
+  /** Holds what the "chat instead" intake flow collected until Plan picks it up and drops back into Review with it pre-filled. */
+  planChatDraft: { text: string; collected: CollectedFields } | null;
+  setPlanChatDraft: (draft: { text: string; collected: CollectedFields }) => void;
+  clearPlanChatDraft: () => void;
+
+  // ---- Floating Focus widget (replaces the old full-page focus session) ----
+  // Window chrome state (position/size/minimized) lives in FloatingWindow's
+  // own sessionStorage-backed hook, not here \u2014 the store only tracks
+  // *what* is being focused on, since that's what other components need
+  // to read/react to.
+  focusWidgetOpen: boolean;
+  activeFocusTask: ActiveFocusTask | null;
+  /** Opens the floating Focus widget targeting a specific task \u2014 either a real roadmap task or a standalone daily task. */
+  openFocusWidget: (task: ActiveFocusTask) => void;
+  /** Convenience for "just focus on whatever's next" \u2014 resolves today's roadmap task automatically. No-op if there isn't one. */
+  startFocusOnTodayTask: () => void;
+  closeFocusWidget: () => void;
+
   /** Records the debrief, advances the roadmap (task/milestone/goal completion), and updates the streak. This is "the work is done for today" - independent of whether the user goes on to share it. */
   completeDebrief: (entry: Omit<ActivityEntry, "id" | "date">) => void;
   /** Publishes an (optional) build-in-public post. Does NOT gate progress - see completeDebrief. */
   publishPost: (post: Omit<BuildInPublicPost, "id" | "date">) => void;
   /** Leaves the share step without posting anything. */
   skipSharing: () => void;
+
+  // ---- Daily To-Do (user-managed, separate from roadmap tasks) ----
+  dailyTasks: DailyTask[];
+  addDailyTask: (title: string, priority?: TaskPriority) => void;
+  addDailyTasks: (titles: string[], source?: "manual" | "ai") => void;
+  updateDailyTask: (id: string, patch: Partial<Pick<DailyTask, "title" | "priority">>) => void;
+  deleteDailyTask: (id: string) => void;
+  toggleDailyTask: (id: string) => void;
+  reorderDailyTasks: (orderedIds: string[]) => void;
+
+  // ---- Widgets ----
+  taskProgressWidgetEnabled: boolean;
+  toggleTaskProgressWidget: () => void;
 
   // ---- History ----
   activityLog: ActivityEntry[];
@@ -244,7 +306,7 @@ interface AppState {
     patch: Partial<
       Pick<
         BuildInPublicPost,
-        "twitter" | "linkedin" | "cardHeadline" | "cardSubline"
+        "twitter" | "linkedin" | "instagram" | "medium" | "cardHeadline" | "cardSubline"
       >
     >,
   ) => void;
@@ -252,8 +314,19 @@ interface AppState {
 
   // ---- Notifications ----
   notifications: AppNotification[];
+  addNotification: (title: string, body: string) => void;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
+
+  /**
+   * The "AI as PM" pass: sends the goal's current roadmap to Gemma for
+   * review (gaps, splits, merges, reordering, priority/dependsOn) and, if
+   * anything meaningfully changed, applies it and drops a notification
+   * summarizing what changed. Fails soft \\u2014 callers fire this without
+   * awaiting and it swallows its own errors, so a flaky/offline AI backend
+   * never blocks or breaks the task-completion flow that triggers it.
+   */
+  reviewRoadmapForGoal: (goalId: string) => Promise<void>;
 
   // ---- Settings ----
   aiSuggestions: boolean;
@@ -309,9 +382,13 @@ const initialTransient = {
   notifications: seedNotifications,
   aiSuggestions: true,
   emailReminders: true,
-  connections: { github: false, figma: false } as Connections,
+  connections: { github: false, figma: false, slack: false, trello: false } as Connections,
   backgroundGlow: true,
   sidebarCollapsed: false,
+  focusWidgetOpen: false,
+  activeFocusTask: null as ActiveFocusTask | null,
+  dailyTasks: [] as DailyTask[],
+  taskProgressWidgetEnabled: true,
 };
 
 export const useAppStore = create<AppState>()(
@@ -440,12 +517,20 @@ export const useAppStore = create<AppState>()(
       },
 
       startGoalCreation: () => set({ sessionFlow: "goal" }),
-      startFocusSession: () => set({ sessionFlow: "focus" }),
-      endFocusSession: (minutes) =>
-        set((state) => ({
-          sessionFlow: "debrief",
-          totalFocusMinutes: state.totalFocusMinutes + minutes,
-        })),
+
+      planChatDraft: null,
+      setPlanChatDraft: (draft) => set({ planChatDraft: draft }),
+      clearPlanChatDraft: () => set({ planChatDraft: null }),
+
+      openFocusWidget: (task) => set({ focusWidgetOpen: true, activeFocusTask: task }),
+      startFocusOnTodayTask: () => {
+        const milestone = get().currentMilestone();
+        const taskId = get().todayTaskId();
+        const task = milestone?.tasks.find((t) => t.id === taskId);
+        if (!task) return;
+        set({ focusWidgetOpen: true, activeFocusTask: { id: task.id, title: task.title, isDailyTask: false } });
+      },
+      closeFocusWidget: () => set({ focusWidgetOpen: false, activeFocusTask: null }),
 
       completeDebrief: (entry) => {
         const full: ActivityEntry = {
@@ -459,8 +544,10 @@ export const useAppStore = create<AppState>()(
           ...computeProgressUpdate(state, goal?.id ?? null),
           lastDebrief: full,
           activityLog: [full, ...state.activityLog],
-          sessionFlow: "share" as const,
+          totalFocusMinutes: state.totalFocusMinutes + entry.focusMinutes,
         }));
+
+        if (goal?.id) void get().reviewRoadmapForGoal(goal.id);
       },
 
       logProgressFromChat: (goalId, entry) => {
@@ -475,7 +562,102 @@ export const useAppStore = create<AppState>()(
           lastDebrief: full,
           activityLog: [full, ...state.activityLog],
         }));
+
+        void get().reviewRoadmapForGoal(goalId);
       },
+
+      reviewRoadmapForGoal: async (goalId) => {
+        const goal = get().goals.find((g) => g.id === goalId);
+        if (!goal || goal.completed) return;
+
+        try {
+          const result = await reviewRoadmap({
+            goalTitle: goal.title,
+            timeline: goal.understanding?.timeline.value ?? null,
+            experience: goal.understanding?.experience.value ?? null,
+            timePerDayMinutes: goal.understanding?.timePerDayMinutes ?? null,
+            roadmap: {
+              milestones: goal.roadmap.milestones.map((m) => ({
+                id: m.id,
+                title: m.title,
+                tasks: m.tasks.map((t) => ({
+                  id: t.id,
+                  title: t.title,
+                  estimateMinutes: t.estimateMinutes,
+                  difficulty: t.difficulty,
+                  done: t.done,
+                })),
+              })),
+            },
+          });
+
+          if (!result.changed || result.summary.length === 0) return;
+
+          // Re-read the goal fresh in case anything else changed it while
+          // the request was in flight (e.g. another completion), so we
+          // reconcile against the latest state, not a stale snapshot.
+          const latest = get().goals.find((g) => g.id === goalId);
+          if (!latest) return;
+
+          const reconciled = reconcileRoadmapReview(latest.roadmap, result);
+
+          let updatedJourney = latest.journey;
+          let addedCardCount = 0;
+          if (latest.journey) {
+            const synced = syncJourneyWithRoadmap(latest.journey, reconciled);
+            updatedJourney = synced.journey;
+            addedCardCount = synced.addedNodeIds.length;
+          }
+
+          set((state) => ({
+            goals: state.goals.map((g) =>
+              g.id === goalId ? { ...g, roadmap: reconciled, journey: updatedJourney } : g,
+            ),
+          }));
+
+          const canvasNote = addedCardCount > 0
+            ? ` ${addedCardCount} new card${addedCardCount === 1 ? "" : "s"} added to your canvas.`
+            : "";
+          get().addNotification(
+            "Your roadmap was updated",
+            result.summary.join(" ") + canvasNote,
+          );
+        } catch (err) {
+          // Fail soft: offline, no key, malformed response, etc. Never
+          // surface this to the user \\u2014 the roadmap just stays as-is
+          // until the next completion triggers another attempt.
+          console.error("[reviewRoadmapForGoal]", err);
+        }
+      },
+
+      addDailyTask: (title, priority = "medium") =>
+        set((state) => {
+          const maxOrder = state.dailyTasks.reduce((m, t) => Math.max(m, t.order), -1);
+          const task: DailyTask = { id: `dt_${Date.now()}`, title, done: false, priority, order: maxOrder + 1, createdAt: Date.now(), source: "manual" };
+          return { dailyTasks: [...state.dailyTasks, task] };
+        }),
+      addDailyTasks: (titles, source = "ai") =>
+        set((state) => {
+          let maxOrder = state.dailyTasks.reduce((m, t) => Math.max(m, t.order), -1);
+          const now = Date.now();
+          const newTasks: DailyTask[] = titles.map((title, i) => {
+            maxOrder += 1;
+            return { id: `dt_${now}_${i}`, title, done: false, priority: "medium", order: maxOrder, createdAt: now, source };
+          });
+          return { dailyTasks: [...state.dailyTasks, ...newTasks] };
+        }),
+      updateDailyTask: (id, patch) =>
+        set((state) => ({ dailyTasks: state.dailyTasks.map((t) => (t.id === id ? { ...t, ...patch } : t)) })),
+      deleteDailyTask: (id) => set((state) => ({ dailyTasks: state.dailyTasks.filter((t) => t.id !== id) })),
+      toggleDailyTask: (id) =>
+        set((state) => ({ dailyTasks: state.dailyTasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)) })),
+      reorderDailyTasks: (orderedIds) =>
+        set((state) => {
+          const order = new Map(orderedIds.map((id, i) => [id, i]));
+          return { dailyTasks: state.dailyTasks.map((t) => ({ ...t, order: order.get(t.id) ?? t.order })) };
+        }),
+
+      toggleTaskProgressWidget: () => set((state) => ({ taskProgressWidgetEnabled: !state.taskProgressWidgetEnabled })),
 
       publishPost: (post) => {
         const full: BuildInPublicPost = {
@@ -500,15 +682,40 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           buildInPublicPosts: state.buildInPublicPosts.map((p) => {
             if (p.id !== id) return p;
-            const variants = [
+            const twitterVariants = [
               `Another step toward ${p.goalTitle} is done. Small wins add up. #buildinpublic`,
               `Progress update on ${p.goalTitle}: shipped something today, however small. #buildinpublic`,
               `Kept the streak alive working on ${p.goalTitle} today. #buildinpublic`,
             ];
-            const twitter =
-              variants[Math.floor(Math.random() * variants.length)];
-            return { ...p, twitter };
+            const linkedinVariants = [
+              `Another small step forward on ${p.goalTitle} today. Consistency over intensity \u2014 that's the whole strategy.`,
+              `Logged progress on ${p.goalTitle} today. Sharing the process, not just the finish line.`,
+            ];
+            const instagramVariants = [
+              `Day-in-the-life update on ${p.goalTitle} \u2728 progress isn't always glamorous but it counts. #buildinpublic #wip`,
+              `Chipping away at ${p.goalTitle} \ud83d\udc4a one task at a time. #buildinpublic`,
+            ];
+            const mediumVariants = [
+              `A quick note on where ${p.goalTitle} stands today, and what moved it forward.`,
+              `Reflecting on the latest step in building ${p.goalTitle} \u2014 what worked, what's next.`,
+            ];
+            const pick = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+            return {
+              ...p,
+              twitter: pick(twitterVariants),
+              linkedin: pick(linkedinVariants),
+              instagram: pick(instagramVariants),
+              medium: pick(mediumVariants),
+            };
           }),
+        })),
+
+      addNotification: (title, body) =>
+        set((state) => ({
+          notifications: [
+            { id: `notif_${Date.now()}`, date: Date.now(), title, body, read: false },
+            ...state.notifications,
+          ],
         })),
 
       markNotificationRead: (id) =>
@@ -551,15 +758,34 @@ export const useAppStore = create<AppState>()(
       // the rest of each goal (roadmap, streak, planner log) is untouched,
       // and the Plan page already renders a clean "no Journey yet" state
       // for a goal with `journey: null`.
-      version: 2,
+      version: 3,
       migrate: (persisted, fromVersion) => {
-        const state = persisted as { goals?: Array<Record<string, unknown>> };
+        const state = persisted as {
+          goals?: Array<Record<string, unknown>>;
+          buildInPublicPosts?: Array<Record<string, unknown>>;
+          connections?: Record<string, boolean>;
+        };
         if (fromVersion < 2 && Array.isArray(state.goals)) {
           state.goals = state.goals.map((g) => {
             const journey = g.journey as { nodes?: Array<Record<string, unknown>> } | null | undefined;
             const looksLegacy = !!journey?.nodes?.length && journey.nodes[0].type === undefined;
             return looksLegacy ? { ...g, journey: null } : g;
           });
+        }
+        if (fromVersion < 3) {
+          // v3: build-in-public posts gained `instagram`/`medium`, and
+          // connections gained `slack`/`trello` \u2014 backfill both so old
+          // persisted state doesn't render undefined text.
+          if (Array.isArray(state.buildInPublicPosts)) {
+            state.buildInPublicPosts = state.buildInPublicPosts.map((p) => ({
+              instagram: "",
+              medium: "",
+              ...p,
+            }));
+          }
+          if (state.connections) {
+            state.connections = { slack: false, trello: false, ...state.connections };
+          }
         }
         return state;
       },
@@ -570,10 +796,16 @@ export const useAppStore = create<AppState>()(
         const {
           sessionFlow: _sessionFlow,
           isAssistantOpen: _isAssistantOpen,
+          focusWidgetOpen: _focusWidgetOpen,
+          activeFocusTask: _activeFocusTask,
+          planChatDraft: _planChatDraft,
           ...rest
         } = state;
         void _sessionFlow;
         void _isAssistantOpen;
+        void _focusWidgetOpen;
+        void _activeFocusTask;
+        void _planChatDraft;
         return rest;
       },
     },

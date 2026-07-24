@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Copy, Download } from 'lucide-react';
+import { Check, Copy, Download, Loader2 } from 'lucide-react';
 import Background from '../../components/app/Background';
 import { FocusedScreen, GlassCard } from '../../components/app/ui';
 import { useAppStore } from '../../stores/useAppStore';
 import { downloadCard } from '../../lib/downloadCard';
+import { generateBuildInPublicContent, type BuildInPublicContent } from '../../lib/aiApi';
 
 export default function ShareResult() {
   const navigate = useNavigate();
@@ -20,15 +21,47 @@ export default function ShareResult() {
   // The debrief already logged today, so the streak reflects today's work.
   const day = streak || 1;
 
-  const posts = useMemo(
+  const localPosts = useMemo<BuildInPublicContent>(
     () => ({
       twitter: `Just shipped a step toward ${goalTitle}. ${summary.slice(0, 60)}\u2026 #buildinpublic`,
       linkedin: `Today I made progress on ${goalTitle}. ${summary} This is part of the "${milestone}" milestone. Building in public keeps me honest about the work.`,
+      instagram: `Progress on ${goalTitle} today \u2728 ${summary.slice(0, 80)} #buildinpublic #wip`,
+      medium: `Here's where things stand on ${goalTitle} today: ${summary} There's more to come on the "${milestone}" milestone.`,
       cardHeadline: `Day ${day}: ${summary.split('.')[0] || 'Made progress'}`,
       cardSubline: `${goalTitle} \u00b7 ${milestone}`,
     }),
     [goalTitle, summary, milestone, day]
   );
+
+  const [posts, setPosts] = useState<BuildInPublicContent>(localPosts);
+  const [isGenerating, setIsGenerating] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsGenerating(true);
+    generateBuildInPublicContent({
+      goalTitle,
+      milestoneTitle: milestone,
+      taskTitle: lastDebrief?.taskTitle,
+      summary,
+      roadmapMilestones: activeGoal?.roadmap.milestones.map((m) => m.title),
+    })
+      .then((ai) => {
+        if (!cancelled) setPosts(ai);
+      })
+      .catch(() => {
+        // No backend / no API key / request failed \u2014 fall back to the local templates.
+        if (!cancelled) setPosts(localPosts);
+      })
+      .finally(() => {
+        if (!cancelled) setIsGenerating(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Only regenerate when the underlying debrief changes, not on every localPosts recompute.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [goalTitle, milestone, summary, lastDebrief?.taskTitle]);
 
   const [copied, setCopied] = useState<string | null>(null);
   const copy = (text: string, label: string) => {
@@ -38,7 +71,15 @@ export default function ShareResult() {
   };
 
   const handleShareAndFinish = () => {
-    publishPost({ goalTitle, twitter: posts.twitter, linkedin: posts.linkedin, cardHeadline: posts.cardHeadline, cardSubline: posts.cardSubline });
+    publishPost({
+      goalTitle,
+      twitter: posts.twitter,
+      linkedin: posts.linkedin,
+      instagram: posts.instagram,
+      medium: posts.medium,
+      cardHeadline: posts.cardHeadline,
+      cardSubline: posts.cardSubline,
+    });
     navigate('/app');
   };
 
@@ -51,7 +92,14 @@ export default function ShareResult() {
     <FocusedScreen maxWidth={560}>
       <Background />
       <GlassCard>
-        <h2 className="font-display font-semibold text-[22px]" style={{ color: 'var(--text)' }}>Build in public</h2>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h2 className="font-display font-semibold text-[22px]" style={{ color: 'var(--text)' }}>Build in public</h2>
+          {isGenerating && (
+            <span className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--text-faint)' }}>
+              <Loader2 size={12} className="animate-spin" /> Drafting with Gemma&hellip;
+            </span>
+          )}
+        </div>
         <p className="text-[13px] mt-1 mb-6" style={{ color: 'var(--text-muted)' }}>
           Today&rsquo;s task is already marked done &mdash; sharing it is optional. Turn it into proof, or skip straight back to your dashboard.
         </p>
@@ -59,6 +107,8 @@ export default function ShareResult() {
         <div className="flex flex-col gap-5">
           <PostBlock label="Twitter / X" text={posts.twitter} copied={copied === 'Twitter'} onCopy={() => copy(posts.twitter, 'Twitter')} />
           <PostBlock label="LinkedIn" text={posts.linkedin} copied={copied === 'LinkedIn'} onCopy={() => copy(posts.linkedin, 'LinkedIn')} />
+          <PostBlock label="Instagram" text={posts.instagram} copied={copied === 'Instagram'} onCopy={() => copy(posts.instagram, 'Instagram')} />
+          <PostBlock label="Medium (opening)" text={posts.medium} copied={copied === 'Medium'} onCopy={() => copy(posts.medium, 'Medium')} />
 
           <div className="rounded-2xl p-4" style={{ background: 'var(--glass)', border: '1px solid var(--glass-border)' }}>
             <div className="font-mono text-[10px] uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>Build in public card</div>

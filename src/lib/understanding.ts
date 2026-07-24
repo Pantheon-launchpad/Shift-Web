@@ -164,12 +164,52 @@ export function opportunitiesFor(category: CategoryKey): string[] {
   return CATEGORY_DEFAULT_OPPORTUNITIES[category];
 }
 
+/**
+ * The shape the Plan chat-collector (server/index.js's /v1/ai/collect) fills
+ * in progressively, one field at a time, as the conversation goes. Every
+ * field is optional since it's built up incrementally.
+ */
+export interface CollectedFields {
+  goal?: string | null;
+  motivation?: string | null;
+  timeline?: string | null;
+  experience?: string | null;
+  resources?: string | null;
+  audience?: string | null;
+  timePerDayMinutes?: number | null;
+  risks?: string[];
+}
+
+/**
+ * Folds chat-collected fields onto a base Understanding (usually the result
+ * of `extractUnderstanding` on whatever raw text exists, even if that's
+ * just a placeholder). Anything explicitly collected is treated as
+ * user-confirmed (confidence 1, source 'clarified') and overrides the
+ * guessed value; anything left undefined is untouched.
+ */
+export function mergeCollectedFields(u: Understanding, collected: CollectedFields): Understanding {
+  const next = { ...u };
+  if (collected.goal) next.goal = field(collected.goal, 1, 'clarified');
+  if (collected.motivation) next.motivation = field(collected.motivation, 1, 'clarified');
+  if (collected.timeline) next.timeline = field(collected.timeline, 1, 'clarified');
+  if (collected.experience) next.experience = field(collected.experience, 1, 'clarified');
+  if (collected.resources) next.resources = field(collected.resources, 1, 'clarified');
+  if (collected.audience) next.audience = field(collected.audience, 1, 'clarified');
+  if (collected.timePerDayMinutes != null) next.timePerDayMinutes = collected.timePerDayMinutes;
+  if (collected.risks && collected.risks.length > 0) next.risks = collected.risks;
+
+  const scored = [next.goal, next.motivation, next.audience, next.timeline, next.experience, next.resources];
+  next.overallConfidence = scored.reduce((sum, f) => sum + f.confidence, 0) / scored.length;
+  return next;
+}
+
 export interface ClarificationQuestion {
-  key: 'timeline' | 'experience' | 'resources' | 'audience' | 'timePerDay';
+  key: 'goal' | 'timeline' | 'experience' | 'resources' | 'audience' | 'timePerDay';
   question: string;
 }
 
 export const CLARIFICATION_BANK: Record<ClarificationQuestion['key'], string> = {
+  goal: 'What\u2019s the goal, in a nutshell?',
   timeline: 'When would you like to have this done by?',
   experience: 'Have you done something like this before, or is this new territory?',
   resources: 'Will you be working on this alone, or with anyone else?',
@@ -196,6 +236,7 @@ export function getClarificationQuestions(u: Understanding): ClarificationQuesti
 /** Applies a clarification answer back onto the Understanding, used both by the sequential clarification step and by the Understanding Review's per-field edit action. */
 export function applyClarification(u: Understanding, key: ClarificationQuestion['key'], answer: string): Understanding {
   const next = { ...u };
+  if (key === 'goal') next.goal = field(answer, 1, 'clarified');
   if (key === 'timeline') next.timeline = field(answer, 1, 'clarified');
   if (key === 'experience') next.experience = field(answer, 1, 'clarified');
   if (key === 'resources') next.resources = field(answer, 1, 'clarified');

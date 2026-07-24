@@ -6,9 +6,14 @@ import Topbar from '../../components/app/Topbar';
 import MobileNav from '../../components/app/MobileNav';
 import CommandPalette from '../../components/app/CommandPalette';
 import AIAssistant from '../../components/app/AIAssistant';
+import FocusWidget from '../../components/app/FocusWidget';
+import TaskProgressWidget from '../../components/app/TaskProgressWidget';
+import { useAppStore } from '../../stores/useAppStore';
 
 export default function AppLayout() {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const focusWidgetOpen = useAppStore((s) => s.focusWidgetOpen);
+  const activeFocusTask = useAppStore((s) => s.activeFocusTask);
 
   useEffect(() => {
     function handler(e: KeyboardEvent) {
@@ -35,6 +40,8 @@ export default function AppLayout() {
       </div>
       <MobileNav />
       <AIAssistant />
+      {focusWidgetOpen && activeFocusTask && <FocusWidget key={activeFocusTask.id} />}
+      <TaskProgressWidget />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   );

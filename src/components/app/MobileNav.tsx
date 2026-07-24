@@ -1,7 +1,7 @@
 import type { ReactNode, CSSProperties } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Activity, Flame, Home, Sparkles, User } from 'lucide-react';
+import { Bot, ListChecks, Share2, Sparkles } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore';
 
 export default function MobileNav() {
@@ -22,8 +22,8 @@ export default function MobileNav() {
         boxShadow: 'var(--shadow-lift)',
       }}
     >
-      <NavItem to="/app" end icon={<Home size={19} />} style={itemStyle} />
-      <NavItem to="/app/goals" icon={<Flame size={19} />} style={itemStyle} />
+      <NavItem to="/app" end icon={<ListChecks size={19} />} style={itemStyle} />
+      <NavItem to="/app/plan" icon={<Bot size={19} />} style={itemStyle} />
 
       {/* Raised center button: shared AI assistant, same state as the desktop bubble */}
       <motion.button
@@ -44,8 +44,7 @@ export default function MobileNav() {
         <Sparkles size={20} color="white" />
       </motion.button>
 
-      <NavItem to="/app/activity" icon={<Activity size={19} />} style={itemStyle} />
-      <NavItem to="/app/settings" icon={<User size={19} />} style={itemStyle} />
+      <NavItem to="/app/build-in-public" icon={<Share2 size={19} />} style={itemStyle} />
     </nav>
   );
 }

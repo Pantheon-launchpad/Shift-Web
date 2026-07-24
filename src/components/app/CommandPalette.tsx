@@ -2,18 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-  Activity,
-  BarChart3,
-  Bot,
-  Calendar,
-  Flame,
-  Map,
-  Search,
-  Settings,
-  Share2,
-  Square,
-} from 'lucide-react';
+import { Bot, ListChecks, Search, Share2, Square } from 'lucide-react';
 import { useAppStore } from '../../stores/useAppStore';
 
 interface Command {
@@ -26,8 +15,7 @@ interface Command {
 
 export default function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const navigate = useNavigate();
-  const startFocusSession = useAppStore((s) => s.startFocusSession);
-  const startGoalCreation = useAppStore((s) => s.startGoalCreation);
+  const startFocusSession = useAppStore((s) => s.startFocusOnTodayTask);
   const [query, setQuery] = useState('');
 
   const close = () => {
@@ -42,14 +30,9 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
 
   const commands: Command[] = useMemo(
     () => [
-      { id: 'dashboard', label: 'Go to Dashboard', icon: Calendar, run: () => go('/app') },
-      { id: 'goals', label: 'Go to Goals', icon: Flame, run: () => go('/app/goals') },
-      { id: 'roadmap', label: 'Go to Roadmap', icon: Map, run: () => go('/app/roadmap') },
+      { id: 'tasks', label: 'Go to Tasks', icon: ListChecks, run: () => go('/app') },
       { id: 'planner', label: 'Go to Plan', icon: Bot, run: () => go('/app/plan') },
-      { id: 'activity', label: 'Go to Activity', icon: Activity, run: () => go('/app/activity') },
       { id: 'bip', label: 'Go to Build in Public', icon: Share2, run: () => go('/app/build-in-public') },
-      { id: 'analytics', label: 'Go to Analytics', icon: BarChart3, run: () => go('/app/analytics') },
-      { id: 'settings', label: 'Go to Settings', icon: Settings, run: () => go('/app/settings') },
       {
         id: 'plan-with-ai',
         label: 'Plan a new goal',
@@ -58,23 +41,13 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
         run: () => go('/app/plan'),
       },
       {
-        id: 'new-goal',
-        label: 'Quick 4-question setup',
-        hint: 'Faster, less detailed than Plan',
-        icon: Flame,
-        run: () => {
-          startGoalCreation();
-          go('/app/goals/new');
-        },
-      },
-      {
         id: 'focus',
         label: 'Start focus session',
-        hint: 'Distraction-free workspace',
+        hint: 'Opens the floating focus widget',
         icon: Square,
         run: () => {
           startFocusSession();
-          go('/app/focus');
+          onClose();
         },
       },
     ],

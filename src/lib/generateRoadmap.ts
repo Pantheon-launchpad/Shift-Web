@@ -223,23 +223,183 @@ export function generateRoadmap(goalTitle: string, answers: string[]): Roadmap {
   const dailyBudget = timeAnswer ? parseDailyMinutes(timeAnswer) : null;
   const startsFromSomething = existingAnswer ? hasExistingWork(existingAnswer) : false;
 
-  const milestones = category.milestones.map((m, mi) => ({
-    id: `m${mi + 1}`,
-    week: mi + 1,
+  const rawMilestones = category.milestones.map((m, mi) => ({
     title: m.title,
-    status: (mi === 0 ? 'current' : 'upcoming') as 'current' | 'upcoming',
     tasks: m.tasks.map((t, ti) => {
       const useExistingWorkVariant = mi === 0 && ti === 0 && startsFromSomething && category.hasExistingWorkTask;
       const source = useExistingWorkVariant ? category.hasExistingWorkTask! : t;
       return {
-        id: `m${mi + 1}t${ti + 1}`,
         title: source.title,
         estimateMinutes: scaleMinutes(source.minutes, dailyBudget),
         difficulty: source.difficulty,
-        done: false,
       };
     }),
   }));
+
+  return stampRoadmapIds({ milestones: rawMilestones });
+}
+
+/**
+ * Stamps ids, week numbers, status, and done:false onto raw milestones/
+ * tasks — the one place that assigns Roadmap identity, shared by both the
+ * AI-generated path (src/lib/aiApi.ts's generateAiRoadmap) and the
+ * deterministic template above, so every consumer (Journey, Tasks page,
+ * backend sync) sees one consistent Roadmap shape no matter which
+ * produced it.
+ */
+export function stampRoadmapIds(raw: {
+  milestones: { title: string; tasks: { title: string; estimateMinutes: number; difficulty: 'easy' | 'medium' | 'hard' }[] }[];
+}): Roadmap {
+  return {
+    milestones: raw.milestones.map((m, mi) => ({
+      id: `m${mi + 1}`,
+      week: mi + 1,
+      title: m.title,
+      status: (mi === 0 ? 'current' : 'upcoming') as 'current' | 'upcoming',
+      tasks: m.tasks.map((t, ti) => ({
+        id: `m${mi + 1}t${ti + 1}`,
+        title: t.title,
+        estimateMinutes: t.estimateMinutes,
+        difficulty: t.difficulty,
+        done: false,
+      })),
+    })),
+  };
+}
+
+/**
+ * Merges the AI review pass's output (src/lib/aiApi.ts's reviewRoadmap)
+ * back into the live roadmap.
+ *
+ * This is the safety boundary for the whole "AI as PM" feature. The server
+ * prompt instructs the model never to touch done tasks, but a prompt is
+ * not a guarantee \u2014 so every done task in the CURRENT roadmap is kept
+ * byte-identical here regardless of what the model returned for that id.
+ * Undone tasks are replaced wholesale by whatever the reviewed milestone
+ * list contains for that milestone (additions, splits, merges, reorders
+ * all flow through naturally, since we don't try to diff them \u2014 we
+ * just don't let done tasks disappear or move).
+ *
+ * ids: anything the model echoed back is reused as-is (so Journey nodes
+ * pointing at existing tasks/milestones keep resolving). Anything new
+ * (id null/missing, or an id that doesn't exist in the current roadmap)
+ * gets a fresh id stamped past the current max index for that milestone,
+ * so it can never collide with a real existing id.
+ *
+ * dependsOn arrives from the server as exact task TITLES (the model can't
+ * know client-assigned ids for tasks it's inventing). Resolved here to
+ * ids by case-insensitive title match across the WHOLE final roadmap;
+ * unmatched titles are dropped rather than left dangling.
+ */
+export function reconcileRoadmapReview(
+  current: Roadmap,
+  reviewed: {
+    milestones: {
+      id: string | null;
+      title: string;
+      tasks: {
+        id: string | null;
+        title: string;
+        estimateMinutes: number;
+        difficulty: 'easy' | 'medium' | 'hard';
+        priority: 'low' | 'medium' | 'high';
+        dependsOn: string[];
+      }[];
+    }[];
+  },
+): Roadmap {
+  const doneTasksById = new Map<string, { milestoneId: string; task: Roadmap['milestones'][number]['tasks'][number] }>();
+  for (const m of current.milestones) {
+    for (const t of m.tasks) {
+      if (t.done) doneTasksById.set(t.id, { milestoneId: m.id, task: t });
+    }
+  }
+
+  let nextMilestoneIdx = current.milestones.length;
+  const milestoneIdxByOldId = new Map(current.milestones.map((m, i) => [m.id, i]));
+
+  // First pass: build final milestones/tasks with real ids, keeping every
+  // done task from `current` untouched and appended into whichever
+  // milestone it already lived in (even if that milestone was reordered
+  // or renamed by the review \u2014 done tasks stay put).
+  const builtMilestones = reviewed.milestones.map((m) => {
+    const existingIdx = m.id !== null ? milestoneIdxByOldId.get(m.id) : undefined;
+    const milestoneId = m.id && existingIdx !== undefined ? m.id : `m${++nextMilestoneIdx}`;
+
+    // Done tasks that belonged to this milestone before review, in their
+    // original order, always come first and are never altered.
+    const doneTasksHere =
+      existingIdx !== undefined ? current.milestones[existingIdx].tasks.filter((t) => t.done) : [];
+
+    const usedIds = new Set(doneTasksHere.map((t) => t.id));
+    let taskCounter = doneTasksHere.length + m.tasks.length; // starts safely past any id that could already be in play
+    const nextFreeId = () => {
+      let id = `${milestoneId}t${++taskCounter}`;
+      while (usedIds.has(id)) id = `${milestoneId}t${++taskCounter}`;
+      return id;
+    };
+
+    const undoneTasks = m.tasks
+      .filter((t) => !(t.id && doneTasksById.has(t.id))) // never let a done task sneak into the undone list twice
+      .map((t) => {
+        const reuseId = t.id && !doneTasksById.has(t.id) && !usedIds.has(t.id) ? t.id : null;
+        const id = reuseId ?? nextFreeId();
+        usedIds.add(id);
+        return {
+          id,
+          title: t.title,
+          estimateMinutes: t.estimateMinutes,
+          difficulty: t.difficulty,
+          done: false,
+          priority: t.priority,
+          _dependsOnTitles: t.dependsOn,
+        };
+      });
+
+    return {
+      id: milestoneId,
+      title: m.title,
+      tasks: [...doneTasksHere.map((t) => ({ ...t, _dependsOnTitles: [] as string[] })), ...undoneTasks],
+    };
+  });
+
+  // Second pass: resolve dependsOn titles to real ids across the whole
+  // final roadmap now that every task has one.
+  const idByTitle = new Map<string, string>();
+  for (const m of builtMilestones) {
+    for (const t of m.tasks) {
+      const key = t.title.trim().toLowerCase();
+      if (!idByTitle.has(key)) idByTitle.set(key, t.id);
+    }
+  }
+
+  const milestones: Roadmap['milestones'] = builtMilestones.map((m, mi) => ({
+    id: m.id,
+    week: mi + 1,
+    title: m.title,
+    status: 'upcoming' as const, // recomputed below
+    tasks: m.tasks.map(({ _dependsOnTitles, ...t }) => {
+      const dependsOn = _dependsOnTitles
+        .map((title) => idByTitle.get(title.trim().toLowerCase()))
+        .filter((id): id is string => !!id && id !== t.id);
+      return dependsOn.length > 0 ? { ...t, dependsOn } : t;
+    }),
+  }));
+
+  // Recompute status: first milestone with any not-done task is 'current',
+  // milestones before it are 'done', everything after is 'upcoming'.
+  let currentAssigned = false;
+  for (const m of milestones) {
+    const allDone = m.tasks.every((t) => t.done);
+    if (allDone) {
+      m.status = 'done';
+    } else if (!currentAssigned) {
+      m.status = 'current';
+      currentAssigned = true;
+    } else {
+      m.status = 'upcoming';
+    }
+  }
 
   return { milestones };
 }
